@@ -1,528 +1,762 @@
 import { useEffect, useState } from "react";
 import {
-  User,
-  Leaf,
-  Trophy,
-  ScanLine,
-  Target,
-  ShieldCheck,
-  Settings,
-  ChevronRight,
   Award,
-  AlertTriangle,
+  BadgeCheck,
+  ChevronRight,
+  Leaf,
+  Mail,
+  Pencil,
+  ScanLine,
+  Settings,
+  ShieldCheck,
+  Target,
+  Trophy,
+  User,
+  X,
 } from "lucide-react";
-
 import { NavLink } from "react-router-dom";
-import AppLayout from "../components/AppLayout";
-import { API_URL } from "../config";
+
+import { apiJson } from "../utils/api";
+import { useAuth } from "../context/AuthContext";
+import PageLoading from "../components/PageLoading";
+import RetryState from "../components/RetryState";
 
 export default function Profile() {
+  const { user, updateUser } = useAuth();
+
   const [analytics, setAnalytics] = useState(null);
   const [ecoScore, setEcoScore] = useState(null);
   const [gamification, setGamification] = useState(null);
+
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
+
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState("");
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+  });
 
   useEffect(() => {
+    setForm({
+      name: user?.name || "",
+      email: user?.email || "",
+    });
+  }, [user?.name, user?.email]);
+
+  const nameForInitials = (user?.name || "Eco").trim();
+
+  const initials = nameForInitials
+    ? nameForInitials
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()
+    : "E";
+
+  useEffect(() => {
+    let mounted = true;
+
     async function loadProfile() {
+      setLoading(true);
+      setError("");
+
       try {
         const [
-          analyticsResponse,
-          scoreResponse,
-          gamificationResponse,
+          analyticsData,
+          scoreData,
+          gamificationData,
         ] = await Promise.all([
-          fetch(`${API_URL}/analytics`),
-          fetch(`${API_URL}/eco-score`),
-          fetch(`${API_URL}/gamification`),
+          apiJson("/analytics"),
+          apiJson("/eco-score"),
+          apiJson("/gamification"),
         ]);
 
-        const analyticsData =
-          await analyticsResponse.json();
+        if (!mounted) return;
 
-        const scoreData =
-          await scoreResponse.json();
+        setAnalytics(analyticsData || {});
+        setEcoScore(scoreData || {});
+        setGamification(gamificationData || {});
+      } catch (requestError) {
+        if (!mounted) return;
 
-        const gamificationData =
-          await gamificationResponse.json();
+        console.error("Profile loading error:", requestError);
 
-        setAnalytics(analyticsData);
-        setEcoScore(scoreData);
-        setGamification(gamificationData);
-      } catch (error) {
-        console.error(
-          "Profile loading error:",
-          error
+        setError(
+          requestError?.message ||
+            "Unable to load profile data right now."
         );
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
     loadProfile();
-  }, []);
+
+    return () => {
+      mounted = false;
+    };
+  }, [retryCount]);
 
   if (loading) {
+    return <PageLoading label="Loading your profile…" />;
+  }
+
+  if (error) {
     return (
-      <AppLayout>
-        <LoadingState />
-      </AppLayout>
+      <div className="min-h-full bg-[#f5f8f6] px-4 py-8 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-[1100px]">
+          <RetryState
+            title="Profile data unavailable"
+            message={error}
+            onRetry={() => setRetryCount((count) => count + 1)}
+          />
+        </div>
+      </div>
     );
   }
 
-  const totalScans =
-    analytics?.total_scans ??
-    gamification?.total_scans ??
-    0;
+  const totalScans = Math.max(
+    0,
+    safeNumber(
+      analytics?.total_scans ??
+        gamification?.total_scans ??
+        0
+    )
+  );
 
-  const score =
-    Number(
+  const score = clamp(
+    safeNumber(
       ecoScore?.eco_sort_score ??
         ecoScore?.score ??
         0
-    );
+    ),
+    0,
+    100
+  );
 
   const level =
     ecoScore?.level ||
     gamification?.level ||
     "Eco Explorer";
 
-  const badges =
-    gamification?.badges || [];
-
-  const badgeCount = badges.length;
-
-  const scoreBreakdown = ecoScore?.score_breakdown || {};
-  const scoreWeights = ecoScore?.weights || {};
+  const badges = Array.isArray(gamification?.badges)
+    ? gamification.badges
+    : [];
 
   const nextLevel =
     gamification?.next_level ||
     ecoScore?.next_level ||
     "Maximum level reached";
 
-  const pointsToNextLevel =
+  const pointsToNextLevelRaw =
     gamification?.points_to_next_level ??
     ecoScore?.points_to_next_level ??
     null;
 
-  const gamificationProgress = Math.min(
-    100,
-    Math.max(0, Number(gamification?.progress_percentage ?? 0))
+  const pointsToNextLevel =
+    pointsToNextLevelRaw === null
+      ? null
+      : Math.max(0, safeNumber(pointsToNextLevelRaw));
+
+  const points = Math.max(
+    0,
+    safeNumber(gamification?.points)
   );
 
-  const gamificationPoints = gamification?.points ?? 0;
+  const progress = clamp(
+    safeNumber(gamification?.progress_percentage),
+    0,
+    100
+  );
+
+  const breakdown =
+    ecoScore?.score_breakdown &&
+    typeof ecoScore.score_breakdown === "object"
+      ? ecoScore.score_breakdown
+      : {};
+
+  const weights =
+    ecoScore?.weights &&
+    typeof ecoScore.weights === "object"
+      ? ecoScore.weights
+      : {};
+
+  const memberSince = formatMemberSince(user?.created_at);
+
+  const handleSave = async (event) => {
+    event.preventDefault();
+
+    if (saving) {
+      return;
+    }
+
+    const name = form.name.trim();
+    const email = form.email.trim();
+
+    if (!name || !email) {
+      setSaveError("Name and email are required.");
+      return;
+    }
+
+    setSaving(true);
+    setSaveError("");
+    setSaveSuccess("");
+
+    try {
+      const data = await apiJson("/auth/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+        }),
+      });
+
+      if (data?.user) {
+        updateUser(data.user);
+      }
+
+      setEditing(false);
+      setSaveSuccess("Profile updated successfully.");
+    } catch (requestError) {
+      console.error("Profile update error:", requestError);
+
+      setSaveError(
+        requestError?.message ||
+          "Unable to update profile."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setSaveError("");
+    setSaveSuccess("");
+
+    setForm({
+      name: user?.name || "",
+      email: user?.email || "",
+    });
+  };
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-[#f5f7f9] text-[#111c2c]">
-
-        <main className="mx-auto max-w-[1100px] px-5 py-10 md:px-8 lg:px-10">
-
-          {/* HEADER */}
-          <section>
-
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#c9ead6] bg-[#effaf3] px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] text-[#087443]">
-              <User size={14} />
-              Your profile
+    <div className="eco-app-page min-h-full bg-[#f5f8f6] text-[#10241b]">
+      <main
+        className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10"
+        aria-labelledby="profile-page-title"
+      >
+        {/* PAGE HEADER */}
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#cbe6d4] bg-[#eef9f2] px-3.5 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-[#087443]">
+              <User size={13} aria-hidden="true" />
+              Personal profile
             </div>
 
-            <h1 className="mt-5 text-[38px] font-black tracking-[-0.05em] md:text-[48px]">
-              Profile
+            <h1
+              id="profile-page-title"
+              className="mt-4 text-[34px] font-black tracking-[-0.055em] sm:text-[46px]"
+            >
+              Your Eco Profile
             </h1>
 
-            <p className="mt-3 max-w-[600px] text-[14px] leading-6 text-[#68788b]">
-              Manage your Eco-Sort identity and view your
-              environmental progress.
+            <p className="mt-2 max-w-[650px] text-[13px] leading-6 text-[#6c7d75] sm:text-[14px]">
+              Your identity, progress, and waste-sorting journey —
+              all in one place.
             </p>
+          </div>
 
-          </section>
+          <NavLink
+            to="/settings"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#d8e2dc] bg-white px-4 text-[10px] font-black text-[#43534b] shadow-sm transition hover:border-[#b9d8c3] hover:bg-[#f1faf4] hover:text-[#087443] focus:outline-none focus:ring-2 focus:ring-[#68b985]/40"
+          >
+            <Settings size={15} aria-hidden="true" />
+            Settings
+          </NavLink>
+        </header>
 
-          {/* PROFILE CARD */}
-          <section className="mt-8">
+        {/* HERO */}
+        <section
+          className="relative mt-7 overflow-hidden rounded-[28px] bg-[#063d32] shadow-[0_18px_50px_rgba(6,61,50,0.16)]"
+          aria-label="Profile overview"
+        >
+          <div
+            className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-[#35a66c]/25 blur-3xl"
+            aria-hidden="true"
+          />
 
-            <div className="overflow-hidden rounded-[24px] border border-[#dce5e0] bg-white shadow-sm">
+          <div
+            className="pointer-events-none absolute -bottom-36 left-1/3 h-72 w-72 rounded-full bg-[#64c96a]/15 blur-3xl"
+            aria-hidden="true"
+          />
 
-              <div className="relative h-[145px] overflow-hidden bg-[#033e35]">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.09]"
+            style={{
+              backgroundImage:
+                "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+              backgroundSize: "34px 34px",
+            }}
+            aria-hidden="true"
+          />
 
-                <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#087443]/30 blur-3xl" />
-
-                <div className="absolute -bottom-20 left-[35%] h-48 w-48 rounded-full bg-[#64c96a]/10 blur-3xl" />
-
+          <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center lg:p-10">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+              <div
+                className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[26px] border-4 border-white/80 bg-[#15904d] text-2xl font-black text-white shadow-xl sm:h-28 sm:w-28 sm:text-3xl"
+                aria-label={`Profile initials ${initials}`}
+              >
+                {initials}
               </div>
 
-              <div className="relative px-6 pb-7 md:px-8">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#8de0a5]">
+                  Eco-Sort AI member
+                </p>
 
-                <div className="-mt-12 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+                <h2 className="mt-2 break-words text-[29px] font-black tracking-[-0.04em] text-white sm:text-[36px]">
+                  {user?.name || "Eco Warrior"}
+                </h2>
 
-                  <div className="flex items-end gap-4">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-[#c7ded3]">
+                  <span className="inline-flex min-w-0 items-center gap-1.5 break-all">
+                    <Mail
+                      size={13}
+                      className="shrink-0"
+                      aria-hidden="true"
+                    />
+                    {user?.email || "No email"}
+                  </span>
 
-                    <div className="flex h-24 w-24 items-center justify-center rounded-[24px] border-[6px] border-white bg-[#087443] text-white shadow-lg">
-                      <User size={39} />
-                    </div>
+                  <span
+                    className="hidden h-1 w-1 rounded-full bg-[#6fa893] sm:block"
+                    aria-hidden="true"
+                  />
 
-                    <div className="pb-1">
+                  <span>Member since {memberSince}</span>
+                </div>
+              </div>
+            </div>
 
-                      <h2 className="text-[23px] font-black">
-                        Eco Warrior
-                      </h2>
+            <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-sm sm:p-5">
+              <ScoreRing score={score} />
 
-                      <p className="mt-1 text-[11px] text-[#7b8793]">
-                        Eco-Sort AI member
-                      </p>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-[#9ed4b5]">
+                  Eco-Sort Score
+                </p>
 
-                    </div>
+                <p className="mt-1 text-[18px] font-black text-white">
+                  {level}
+                </p>
 
+                <p className="mt-1 text-[10px] text-[#b9d3c7]">
+                  Based on your scan activity
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* KPI STRIP */}
+        <section
+          className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          aria-label="Profile statistics"
+        >
+          <MetricCard
+            icon={ScanLine}
+            label="Total scans"
+            value={totalScans}
+            caption="Waste analyzed"
+          />
+
+          <MetricCard
+            icon={Award}
+            label="Badges"
+            value={badges.length}
+            caption="Achievements unlocked"
+          />
+
+          <MetricCard
+            icon={Trophy}
+            label="Eco points"
+            value={points}
+            caption="Earned through activity"
+          />
+
+          <MetricCard
+            icon={Target}
+            label="Current level"
+            value={level}
+            caption="Keep progressing"
+            compact
+          />
+        </section>
+
+        {/* ACCOUNT + STATUS */}
+        <section className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+          <Card>
+            <SectionHeading
+              icon={User}
+              eyebrow="Account"
+              title="Profile information"
+              description="Keep your Eco-Sort identity up to date."
+            />
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <InfoTile
+                icon={User}
+                label="Display name"
+                value={user?.name || "—"}
+              />
+
+              <InfoTile
+                icon={Mail}
+                label="Email address"
+                value={user?.email || "—"}
+              />
+            </div>
+
+            {!editing ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(true);
+                  setSaveError("");
+                  setSaveSuccess("");
+                }}
+                className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#087443] px-4 text-[11px] font-black text-white shadow-lg shadow-[#087443]/15 transition hover:-translate-y-0.5 hover:bg-[#096239] focus:outline-none focus:ring-2 focus:ring-[#68b985]/50 focus:ring-offset-2"
+              >
+                <Pencil size={14} aria-hidden="true" />
+                Edit profile
+              </button>
+            ) : (
+              <form
+                onSubmit={handleSave}
+                className="mt-5 rounded-2xl border border-[#d9e9df] bg-[#f7fbf8] p-4 sm:p-5"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.1em] text-[#087443]">
+                      Edit details
+                    </p>
+
+                    <p className="mt-1 text-[11px] text-[#73827b]">
+                      Changes are saved to your account.
+                    </p>
                   </div>
 
-                  <NavLink
-                    to="/settings"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#dfe5e7] bg-white px-4 py-2.5 text-[10px] font-bold text-[#4d5963] transition hover:border-[#b8d8c2] hover:bg-[#f3faf5] hover:text-[#087443]"
+                  <button
+                    type="button"
+                    onClick={cancelEditing}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#dbe5df] bg-white text-[#718078] transition hover:text-[#087443] focus:outline-none focus:ring-2 focus:ring-[#68b985]/40"
+                    aria-label="Cancel editing"
                   >
-                    <Settings size={14} />
-                    Settings
-                  </NavLink>
-
+                    <X size={15} aria-hidden="true" />
+                  </button>
                 </div>
 
-              </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label="Name"
+                    value={form.name}
+                    onChange={(value) =>
+                      setForm((current) => ({
+                        ...current,
+                        name: value,
+                      }))
+                    }
+                    required
+                    maxLength={80}
+                  />
 
-            </div>
-
-          </section>
-
-          {/* PROFILE METRICS */}
-          <section className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-            <ProfileMetric
-              icon={Leaf}
-              label="Eco-Sort Score"
-              value={score}
-              description={level}
-            />
-
-            <ProfileMetric
-              icon={ScanLine}
-              label="Total Scans"
-              value={totalScans}
-              description="Waste analyzed"
-            />
-
-            <ProfileMetric
-              icon={Award}
-              label="Badges"
-              value={badgeCount}
-              description="Achievements unlocked"
-            />
-
-            <ProfileMetric
-              icon={Target}
-              label="Current Level"
-              value={level}
-              description="Keep progressing"
-              smallValue
-            />
-
-          </section>
-
-          {/* PROFILE INFORMATION */}
-          <section className="mt-7 grid gap-5 lg:grid-cols-[1fr_0.8fr]">
-
-            {/* ACCOUNT */}
-            <div className="rounded-[20px] border border-[#e1e6e9] bg-white p-6 shadow-sm">
-
-              <div className="flex items-center gap-3">
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#eaf7ef] text-[#087443]">
-                  <User size={20} />
+                  <Field
+                    label="Email"
+                    type="email"
+                    value={form.email}
+                    onChange={(value) =>
+                      setForm((current) => ({
+                        ...current,
+                        email: value,
+                      }))
+                    }
+                    required
+                    maxLength={254}
+                  />
                 </div>
 
-                <div>
-
-                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#8995a1]">
-                    Account
-                  </p>
-
-                  <h2 className="mt-1 text-[21px] font-black">
-                    Profile Information
-                  </h2>
-
-                </div>
-
-              </div>
-
-              <div className="mt-6 space-y-4">
-
-                <InfoRow
-                  label="Display Name"
-                  value="Eco Warrior"
-                />
-
-                <InfoRow
-                  label="Email"
-                  value="eco-warrior@example.com"
-                />
-
-                <InfoRow
-                  label="Total Scans"
-                  value={`${totalScans} scans`}
-                />
-
-              </div>
-
-            </div>
-
-            {/* ECO STATUS */}
-            <div className="rounded-[20px] border border-[#dceee2] bg-[#f3faf5] p-6">
-
-              <div className="flex items-center gap-3">
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#dff2e5] text-[#087443]">
-                  <Leaf size={20} />
-                </div>
-
-                <div>
-
-                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#087443]">
-                    Eco Status
-                  </p>
-
-                  <h2 className="mt-1 text-[21px] font-black text-[#173d2d]">
-                    {level}
-                  </h2>
-
-                </div>
-
-              </div>
-
-              <p className="mt-5 text-[11px] leading-5 text-[#667a6e]">
-                Your current Eco-Sort Score is{" "}
-                <strong>{score}</strong>. Continue scanning
-                waste and making informed disposal decisions
-                to improve your progress.
-              </p>
-
-              <NavLink
-                to="/gamification"
-                className="mt-5 inline-flex items-center gap-2 text-[10px] font-black text-[#087443] transition hover:gap-3"
-              >
-                View achievements
-                <ChevronRight size={14} />
-              </NavLink>
-
-            </div>
-
-          </section>
-
-          {/* ECO-SORT SCORE BREAKDOWN */}
-          <section className="mt-5 rounded-[20px] border border-[#dceee2] bg-white p-6 shadow-sm">
-
-            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#087443]">
-                  Score details
-                </p>
-
-                <h2 className="mt-2 text-[21px] font-black">
-                  How your Eco-Sort Score is built
-                </h2>
-
-                <p className="mt-2 max-w-[650px] text-[10px] leading-5 text-[#718092]">
-                  Your score combines AI confidence, reliable scan results,
-                  safe-handling signals, and consistent activity.
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-[#eff9f2] px-4 py-3 text-left sm:text-right">
-                <p className="text-[9px] font-bold text-[#6d7f74]">
-                  Next level
-                </p>
-                <p className="mt-1 text-[13px] font-black text-[#087443]">
-                  {nextLevel}
-                </p>
-                {pointsToNextLevel !== null && (
-                  <p className="mt-1 text-[8px] text-[#728278]">
-                    {pointsToNextLevel} points needed
+                {saveError && (
+                  <p
+                    className="mt-3 rounded-lg bg-[#fff1f0] px-3 py-2 text-[10px] font-bold text-[#b42318]"
+                    role="alert"
+                  >
+                    {saveError}
                   </p>
                 )}
-              </div>
-            </div>
 
-            <div className="mt-5 rounded-xl border border-[#dcebe1] bg-[#f5faf6] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-[#087443]">
-                    Gamification Progress
-                  </p>
-                  <p className="mt-1 text-[12px] font-black text-[#173d2d]">
-                    {gamificationPoints} points · {nextLevel}
-                  </p>
-                </div>
-                <span className="text-[10px] font-black text-[#087443]">
-                  {Math.round(gamificationProgress)}%
-                </span>
-              </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#dfe8e2]">
-                <div
-                  className="h-full rounded-full bg-[#168b4c] transition-all duration-700"
-                  style={{ width: `${gamificationProgress}%` }}
-                />
-              </div>
-              <p className="mt-2 text-[8px] text-[#728278]">
-                {pointsToNextLevel !== null
-                  ? `${pointsToNextLevel} points needed for the next level.`
-                  : "You have reached the highest level."}
+                <button
+                  disabled={saving}
+                  type="submit"
+                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#033e35] px-4 text-[10px] font-black text-white transition hover:bg-[#075245] focus:outline-none focus:ring-2 focus:ring-[#68b985]/50 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {saving ? "Saving changes…" : "Save changes"}
+                </button>
+              </form>
+            )}
+
+            {saveSuccess && (
+              <p
+                className="mt-3 flex items-center gap-2 text-[10px] font-bold text-[#087443]"
+                role="status"
+                aria-live="polite"
+              >
+                <BadgeCheck size={14} aria-hidden="true" />
+                {saveSuccess}
               </p>
-            </div>
+            )}
+          </Card>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <ProfileScoreFactor
-                label="AI Confidence"
-                value={scoreBreakdown.ai_confidence ?? 0}
-                weight={scoreWeights.ai_confidence ?? 50}
-                description="Average confidence across your scans."
-              />
-
-              <ProfileScoreFactor
-                label="Sorting Reliability"
-                value={scoreBreakdown.sorting_reliability ?? 0}
-                weight={scoreWeights.sorting_reliability ?? 25}
-                description="Share of scans that did not require review."
-              />
-
-              <ProfileScoreFactor
-                label="Safe Handling"
-                value={scoreBreakdown.safe_handling ?? 0}
-                weight={scoreWeights.safe_handling ?? 15}
-                description="Safety signals associated with your scan results."
-              />
-
-              <ProfileScoreFactor
-                label="Consistency"
-                value={scoreBreakdown.consistency ?? 0}
-                weight={scoreWeights.consistency ?? 10}
-                description="Rewards continued use of the scanning workflow."
-              />
-            </div>
-
-            <div className="mt-5 rounded-xl bg-[#f8faf9] p-4">
-              <div className="flex items-start gap-2">
-                <AlertTriangle
-                  size={14}
-                  className="mt-0.5 shrink-0 text-[#9b7a16]"
-                />
-
-                <p className="text-[9px] leading-5 text-[#758291]">
-                  <strong className="text-[#4d5d54]">Important:</strong>{" "}
-                  Eco-Sort Score is a product metric based on AI confidence
-                  and app activity. It is not a measurement of actual
-                  recycling accuracy or environmental impact.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* BADGE PREVIEW */}
-          <section className="mt-5 rounded-[20px] border border-[#e1e6e9] bg-white p-6 shadow-sm">
-
-            <div className="flex items-center justify-between">
-
+          <div className="rounded-[24px] border border-[#cfe8d8] bg-gradient-to-br from-[#effaf3] to-[#e4f5e9] p-6 shadow-sm sm:p-7">
+            <div className="flex items-start justify-between gap-4">
               <div>
-
-                <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#8995a1]">
-                  Achievements
+                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-[#087443]">
+                  Current status
                 </p>
 
-                <h2 className="mt-2 text-[21px] font-black">
-                  Your Badges
+                <h2 className="mt-2 text-[25px] font-black tracking-[-0.04em] text-[#173d2d]">
+                  {level}
                 </h2>
-
               </div>
+
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/80 text-[#087443] shadow-sm"
+                aria-hidden="true"
+              >
+                <Leaf size={20} />
+              </div>
+            </div>
+
+            <p className="mt-5 text-[11px] leading-5 text-[#5f7468]">
+              Your score is{" "}
+              <strong className="text-[#173d2d]">
+                {Math.round(score)}/100
+              </strong>
+              . Keep scanning waste to build consistent sorting
+              habits.
+            </p>
+
+            <div
+              className="mt-6 h-2 overflow-hidden rounded-full bg-[#cfe5d7]"
+              role="progressbar"
+              aria-label="Eco-Sort Score"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={score}
+            >
+              <div
+                className="h-full rounded-full bg-[#168b4c] transition-all duration-700"
+                style={{
+                  width: `${score}%`,
+                }}
+              />
+            </div>
+
+            <div className="mt-2 flex justify-between text-[8px] font-bold text-[#6f8278]">
+              <span>0</span>
+              <span>Eco-Sort Score</span>
+              <span>100</span>
+            </div>
+
+            <NavLink
+              to="/gamification"
+              className="mt-6 inline-flex min-h-10 items-center gap-2 rounded-xl bg-white px-4 text-[10px] font-black text-[#087443] shadow-sm transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#68b985]/40"
+            >
+              View achievements
+              <ChevronRight size={14} aria-hidden="true" />
+            </NavLink>
+          </div>
+        </section>
+
+        {/* PROGRESS */}
+        <Card className="mt-5">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+            <SectionHeading
+              icon={Target}
+              eyebrow="Progress"
+              title="Your Eco-Sort Score"
+              description="A product metric built from scan confidence, reliability, safety signals, and consistency."
+            />
+
+            <div className="rounded-2xl bg-[#eff9f2] px-4 py-3 sm:min-w-[170px] sm:text-right">
+              <p className="text-[8px] font-bold uppercase tracking-[0.08em] text-[#718078]">
+                Next level
+              </p>
+
+              <p className="mt-1 text-[13px] font-black text-[#087443]">
+                {nextLevel}
+              </p>
+
+              {pointsToNextLevel !== null && (
+                <p className="mt-1 text-[9px] text-[#728278]">
+                  {pointsToNextLevel} points needed
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-[#dcebe1] bg-[#f7fbf8] p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-[#087443]">
+                  Level progress
+                </p>
+
+                <p className="mt-1 text-[12px] font-black text-[#173d2d]">
+                  {points} points · {nextLevel}
+                </p>
+              </div>
+
+              <span className="text-[11px] font-black text-[#087443]">
+                {Math.round(progress)}%
+              </span>
+            </div>
+
+            <div
+              className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#dfe8e2]"
+              role="progressbar"
+              aria-label="Level progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+            >
+              <div
+                className="h-full rounded-full bg-[#168b4c] transition-all duration-700"
+                style={{
+                  width: `${progress}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <ScoreFactor
+              label="AI Confidence"
+              value={breakdown.ai_confidence ?? 0}
+              weight={weights.ai_confidence ?? 50}
+            />
+
+            <ScoreFactor
+              label="Sorting Reliability"
+              value={breakdown.sorting_reliability ?? 0}
+              weight={weights.sorting_reliability ?? 25}
+            />
+
+            <ScoreFactor
+              label="Safe Handling"
+              value={breakdown.safe_handling ?? 0}
+              weight={weights.safe_handling ?? 15}
+            />
+
+            <ScoreFactor
+              label="Consistency"
+              value={breakdown.consistency ?? 0}
+              weight={weights.consistency ?? 10}
+            />
+          </div>
+        </Card>
+
+        {/* BADGES + QUICK ACTIONS */}
+        <section className="mt-5 grid gap-5 lg:grid-cols-[1fr_.85fr]">
+          <Card>
+            <div className="flex items-end justify-between gap-4">
+              <SectionHeading
+                icon={Award}
+                eyebrow="Achievements"
+                title="Your badges"
+                description="Milestones unlocked through your Eco-Sort activity."
+              />
 
               <NavLink
                 to="/gamification"
-                className="text-[10px] font-black text-[#087443]"
+                className="shrink-0 rounded-lg px-2 py-1 text-[10px] font-black text-[#087443] transition hover:bg-[#eef9f2] focus:outline-none focus:ring-2 focus:ring-[#68b985]/40"
               >
                 View all →
               </NavLink>
-
             </div>
 
-            {badges.length > 0 ? (
-              <div className="mt-5 flex flex-wrap gap-3">
-
-                {badges.map((badge, index) => {
-
-                  const badgeName =
+            {badges.length ? (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {badges.slice(0, 6).map((badge, index) => {
+                  const name =
                     typeof badge === "string"
                       ? badge
-                      : badge?.name || "Eco Badge";
+                      : badge?.name ||
+                        badge?.title ||
+                        "Eco Badge";
 
                   return (
                     <div
-                      key={`${badgeName}-${index}`}
-                      className="flex items-center gap-2 rounded-xl border border-[#dceee2] bg-[#f3faf5] px-4 py-3"
+                      key={`${name}-${index}`}
+                      className="flex items-center gap-3 rounded-2xl border border-[#dceee2] bg-[#f5faf7] p-3.5"
                     >
-
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#dff2e5] text-[#087443]">
-                        <Award size={16} />
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#dff2e5] text-[#087443]"
+                        aria-hidden="true"
+                      >
+                        <Award size={17} />
                       </div>
 
-                      <span className="text-[10px] font-bold text-[#315342]">
-                        {badgeName}
-                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[10px] font-black text-[#315342]">
+                          {name}
+                        </p>
 
+                        <p className="mt-0.5 text-[8px] text-[#7b8b83]">
+                          Unlocked achievement
+                        </p>
+                      </div>
                     </div>
                   );
                 })}
-
               </div>
             ) : (
-              <div className="mt-5 rounded-xl bg-[#fafbfb] p-5 text-center">
-
-                <Award
-                  size={24}
-                  className="mx-auto text-[#a0a9af]"
-                />
-
-                <p className="mt-3 text-[11px] font-bold">
-                  No badges yet
-                </p>
-
-                <p className="mt-1 text-[9px] text-[#8995a1]">
-                  Start scanning to unlock achievements.
-                </p>
-
-              </div>
+              <EmptyBadges />
             )}
+          </Card>
 
-          </section>
+          <Card>
+            <SectionHeading
+              icon={Trophy}
+              eyebrow="Quick access"
+              title="Keep going"
+              description="Jump back into the parts of Eco-Sort that matter most."
+            />
 
-          {/* QUICK ACTIONS */}
-          <section className="mt-5 rounded-[20px] border border-[#e1e6e9] bg-white p-6 shadow-sm">
-
-            <div>
-
-              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#8995a1]">
-                Quick Access
-              </p>
-
-              <h2 className="mt-2 text-[21px] font-black">
-                Continue your journey
-              </h2>
-
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-
+            <div className="mt-5 grid gap-3">
               <QuickAction
                 to="/scan"
                 icon={ScanLine}
-                title="Scan Waste"
+                title="Scan waste"
                 description="Identify a new waste item."
               />
 
               <QuickAction
                 to="/history"
                 icon={ShieldCheck}
-                title="Scan History"
+                title="Scan history"
                 description="Review previous results."
               />
 
@@ -530,173 +764,241 @@ export default function Profile() {
                 to="/gamification"
                 icon={Trophy}
                 title="Achievements"
-                description="View your badges and points."
+                description="See badges, points, and levels."
               />
-
             </div>
+          </Card>
+        </section>
 
-          </section>
+        {/* DATA NOTICE */}
+        <div
+          className="mt-5 flex items-start gap-3 rounded-2xl border border-[#d5e4dc] bg-white px-5 py-4 shadow-sm"
+          role="note"
+        >
+          <ShieldCheck
+            size={17}
+            className="mt-0.5 shrink-0 text-[#087443]"
+            aria-hidden="true"
+          />
 
-          {/* PRIVACY */}
-          <section className="mt-5 rounded-[18px] border border-[#e1e6e9] bg-white p-5 shadow-sm">
-
-            <div className="flex items-start gap-3">
-
-              <ShieldCheck
-                size={18}
-                className="mt-0.5 shrink-0 text-[#087443]"
-              />
-
-              <div>
-
-                <h3 className="text-[12px] font-black">
-                  Your data
-                </h3>
-
-                <p className="mt-1 text-[10px] leading-5 text-[#758291]">
-                  Your scan activity powers your history,
-                  analytics, Eco-Sort Score, and gamification
-                  features.
-                </p>
-
-              </div>
-
-            </div>
-
-          </section>
-
-          {/* FOOTER */}
-          <div className="mt-7 flex items-start gap-3 rounded-xl bg-[#033e35] px-5 py-4 text-[10px] leading-5 text-white">
-
-            <Leaf
-              size={16}
-              className="mt-0.5 shrink-0 text-[#64c96a]"
-            />
-
-            <p>
-              <strong>Eco-Sort AI:</strong>{" "}
-              Your journey starts with one scan. Keep learning,
-              keep sorting, and keep making every scan count.
-            </p>
-
-          </div>
-
-        </main>
-      </div>
-    </AppLayout>
+          <p className="text-[9px] leading-5 text-[#718078]">
+            <strong className="text-[#3b5147]">
+              Your data stays tied to your account.
+            </strong>{" "}
+            Your scan activity powers your history, analytics,
+            Eco-Sort Score, and gamification experience.
+          </p>
+        </div>
+      </main>
+    </div>
   );
 }
 
-
 /* =========================================================
-   PROFILE SCORE FACTOR
+   CARD
 ========================================================= */
 
-function ProfileScoreFactor({
-  label,
-  value,
-  weight,
+function Card({ children, className = "" }) {
+  return (
+    <div
+      className={`rounded-[24px] border border-[#dfe8e3] bg-white p-5 shadow-sm sm:p-6 ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* =========================================================
+   SECTION HEADING
+========================================================= */
+
+function SectionHeading({
+  icon: Icon,
+  eyebrow,
+  title,
   description,
 }) {
-  const safeValue = Math.max(0, Math.min(100, Number(value) || 0));
-  const safeWeight = Math.max(0, Number(weight) || 0);
-
   return (
-    <div className="rounded-xl border border-[#edf1ef] bg-[#fbfcfb] p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[11px] font-black text-[#263b32]">
-              {label}
-            </p>
-
-            <span className="rounded-full bg-[#eaf7ef] px-2 py-0.5 text-[8px] font-black text-[#087443]">
-              {safeWeight}% weight
-            </span>
-          </div>
-
-          <p className="mt-1 text-[9px] leading-4 text-[#7b8793]">
-            {description}
-          </p>
-        </div>
-
-        <span className="shrink-0 text-[13px] font-black text-[#087443]">
-          {Math.round(safeValue)}%
-        </span>
+    <div className="flex min-w-0 items-start gap-3">
+      <div
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf7ef] text-[#087443]"
+        aria-hidden="true"
+      >
+        <Icon size={18} />
       </div>
 
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#e2e8e4]">
-        <div
-          className="h-full rounded-full bg-[#168b4c] transition-all duration-700"
-          style={{ width: `${safeValue}%` }}
-        />
+      <div className="min-w-0">
+        <p className="text-[9px] font-black uppercase tracking-[0.1em] text-[#087443]">
+          {eyebrow}
+        </p>
+
+        <h2 className="mt-1 text-[20px] font-black tracking-[-0.03em] text-[#182b23]">
+          {title}
+        </h2>
+
+        <p className="mt-1 text-[10px] leading-5 text-[#7a8982]">
+          {description}
+        </p>
       </div>
     </div>
   );
 }
 
-
 /* =========================================================
-   PROFILE METRIC
+   METRIC CARD
 ========================================================= */
 
-function ProfileMetric({
+function MetricCard({
   icon: Icon,
   label,
   value,
-  description,
-  smallValue = false,
+  caption,
+  compact = false,
 }) {
   return (
-    <div className="rounded-[17px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-[20px] border border-[#dfe8e3] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf7ef] text-[#087443]"
+          aria-hidden="true"
+        >
+          <Icon size={18} />
+        </div>
 
-      <div className="flex h-11 w-11 items-center justify-center rounded-[13px] bg-[#eaf7ef] text-[#087443]">
-        <Icon size={21} />
+        <span className="rounded-full bg-[#f1f7f3] px-2 py-1 text-[8px] font-black uppercase tracking-[0.06em] text-[#6d8177]">
+          Profile
+        </span>
       </div>
 
-      <p className="mt-5 text-[10px] text-[#758291]">
+      <p className="mt-5 text-[9px] font-bold uppercase tracking-[0.07em] text-[#82918a]">
         {label}
       </p>
 
       <p
-        className={`mt-1 font-black tracking-[-0.03em] ${
-          smallValue
-            ? "text-[17px]"
-            : "text-[25px]"
+        className={`mt-1 font-black tracking-[-0.04em] text-[#152a20] ${
+          compact ? "break-words text-[18px]" : "text-[26px]"
         }`}
       >
         {value}
       </p>
 
-      <p className="mt-1 text-[9px] text-[#9aa4ad]">
-        {description}
+      <p className="mt-1 text-[9px] text-[#9aa7a1]">
+        {caption}
       </p>
-
     </div>
   );
 }
-
 
 /* =========================================================
-   INFO ROW
+   INFO TILE
 ========================================================= */
 
-function InfoRow({ label, value }) {
+function InfoTile({ icon: Icon, label, value }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-[#edf0f1] bg-[#fafbfb] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="rounded-2xl border border-[#e6ece8] bg-[#fafcfb] p-4">
+      <div className="flex items-center gap-2 text-[#087443]">
+        <Icon size={14} aria-hidden="true" />
 
-      <span className="text-[10px] font-bold text-[#8995a1]">
-        {label}
-      </span>
+        <span className="text-[8px] font-black uppercase tracking-[0.08em]">
+          {label}
+        </span>
+      </div>
 
-      <span className="text-[11px] font-bold text-[#34414c]">
+      <p
+        className="mt-2 truncate text-[12px] font-black text-[#34463d]"
+        title={value}
+      >
         {value}
-      </span>
-
+      </p>
     </div>
   );
 }
 
+/* =========================================================
+   FORM FIELD
+========================================================= */
+
+function Field({
+  label,
+  type = "text",
+  value,
+  onChange,
+  required,
+  maxLength,
+}) {
+  const fieldId = `profile-${label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")}`;
+
+  return (
+    <div>
+      <label
+        htmlFor={fieldId}
+        className="text-[9px] font-black uppercase tracking-[0.08em] text-[#728078]"
+      >
+        {label}
+      </label>
+
+      <input
+        id={fieldId}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        required={required}
+        maxLength={maxLength}
+        autoComplete={
+          type === "email" ? "email" : "name"
+        }
+        className="mt-1.5 min-h-11 w-full rounded-xl border border-[#d9e3dd] bg-white px-3.5 text-[11px] font-semibold text-[#253a30] outline-none transition focus:border-[#087443] focus:ring-4 focus:ring-[#087443]/10 disabled:cursor-not-allowed disabled:opacity-60"
+      />
+    </div>
+  );
+}
+
+/* =========================================================
+   SCORE FACTOR
+========================================================= */
+
+function ScoreFactor({ label, value, weight }) {
+  const safe = clamp(safeNumber(value), 0, 100);
+  const safeWeight = Math.max(0, safeNumber(weight));
+
+  return (
+    <div className="rounded-2xl border border-[#e8eeea] bg-[#fbfcfb] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-black text-[#2c4137]">
+            {label}
+          </p>
+
+          <span className="mt-1 inline-flex rounded-full bg-[#eaf7ef] px-2 py-0.5 text-[8px] font-black text-[#087443]">
+            {safeWeight}% weight
+          </span>
+        </div>
+
+        <span className="text-[13px] font-black text-[#087443]">
+          {Math.round(safe)}%
+        </span>
+      </div>
+
+      <div
+        className="mt-3 h-2 overflow-hidden rounded-full bg-[#e2e9e5]"
+        role="progressbar"
+        aria-label={`${label} score`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={safe}
+      >
+        <div
+          className="h-full rounded-full bg-[#168b4c] transition-all duration-700"
+          style={{
+            width: `${safe}%`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
 /* =========================================================
    QUICK ACTION
@@ -711,64 +1013,110 @@ function QuickAction({
   return (
     <NavLink
       to={to}
-      className="group flex items-center gap-3 rounded-xl border border-[#e6eaec] bg-[#fafbfb] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[#cfe5d6] hover:bg-[#f4faf6]"
+      className="group flex items-center gap-3 rounded-2xl border border-[#e4ebe7] bg-[#fafcfb] p-3.5 transition hover:-translate-y-0.5 hover:border-[#cbe2d3] hover:bg-[#f3faf5] focus:outline-none focus:ring-2 focus:ring-[#68b985]/40"
     >
-
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f7ef] text-[#087443] transition group-hover:bg-[#087443] group-hover:text-white">
-        <Icon size={18} />
+      <div
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f7ef] text-[#087443] transition group-hover:bg-[#087443] group-hover:text-white"
+        aria-hidden="true"
+      >
+        <Icon size={17} />
       </div>
 
       <div className="min-w-0 flex-1">
-
-        <p className="text-[11px] font-black text-[#34414c]">
+        <p className="text-[10px] font-black text-[#34463d]">
           {title}
         </p>
 
-        <p className="mt-1 text-[9px] leading-4 text-[#8995a1]">
+        <p className="mt-1 text-[8px] leading-4 text-[#8a9791]">
           {description}
         </p>
-
       </div>
 
       <ChevronRight
-        size={15}
-        className="text-[#a0a9af] transition group-hover:translate-x-1 group-hover:text-[#087443]"
+        size={14}
+        className="shrink-0 text-[#a0aaa5] transition group-hover:translate-x-1 group-hover:text-[#087443]"
+        aria-hidden="true"
       />
-
     </NavLink>
   );
 }
 
-
 /* =========================================================
-   LOADING
+   EMPTY BADGES
 ========================================================= */
 
-function LoadingState() {
+function EmptyBadges() {
   return (
-    <div className="min-h-screen bg-[#f5f7f9] px-5 py-20">
+    <div className="mt-5 rounded-2xl border border-dashed border-[#dce5e0] bg-[#fafcfb] px-5 py-8 text-center">
+      <Award
+        size={25}
+        className="mx-auto text-[#9eaaa4]"
+        aria-hidden="true"
+      />
 
-      <div className="mx-auto max-w-[900px] text-center">
+      <p className="mt-3 text-[11px] font-black text-[#4d5e55]">
+        No badges yet
+      </p>
 
-        <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-[#eaf7ee]">
-
-          <User
-            size={30}
-            className="text-[#15904d]"
-          />
-
-        </div>
-
-        <p className="mt-5 text-sm font-bold">
-          Loading your profile...
-        </p>
-
-        <p className="mt-2 text-xs text-[#7b8793]">
-          Fetching your Eco-Sort activity.
-        </p>
-
-      </div>
-
+      <p className="mt-1 text-[9px] text-[#8a9791]">
+        Start scanning to unlock achievements.
+      </p>
     </div>
   );
+}
+
+/* =========================================================
+   SCORE RING
+========================================================= */
+
+function ScoreRing({ score }) {
+  const safe = clamp(safeNumber(score), 0, 100);
+
+  return (
+    <div
+      className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full"
+      style={{
+        background: `conic-gradient(#64c96a ${
+          safe * 3.6
+        }deg, rgba(255,255,255,.14) 0deg)`,
+      }}
+      role="img"
+      aria-label={`Eco-Sort Score ${Math.round(safe)} out of 100`}
+    >
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0a4438] text-[14px] font-black text-white">
+        {Math.round(safe)}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function safeNumber(value) {
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : 0;
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function formatMemberSince(createdAt) {
+  if (!createdAt) {
+    return "Eco-Sort member";
+  }
+
+  const date = new Date(createdAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Eco-Sort member";
+  }
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    year: "numeric",
+  });
 }

@@ -1,18 +1,48 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
+from fastapi import (
+    FastAPI,
+    UploadFile,
+    File,
+    HTTPException,
+    Depends,
+    status
+)
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from sqlalchemy import Boolean, Column, ForeignKey, Integer
+from pydantic import BaseModel, EmailStr
 
 import os
 import shutil
 import uuid
 
 from backend.predictor import predict_image
-from backend.database import get_db, Scan
+from backend.database import get_db, Scan, User, Base, engine
+from backend.auth import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    decode_access_token
+)
 
 
 # ============================================================
 # APP
 # ============================================================
+
+class UserSettings(Base):
+    __tablename__ = "user_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    notifications = Column(Boolean, nullable=False, default=True)
+    sound = Column(Boolean, nullable=False, default=True)
+    camera = Column(Boolean, nullable=False, default=True)
+
+
+# Create the settings table if it does not exist.
+Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI(
     title="Eco-Sort AI API",
@@ -22,15 +52,321 @@ app = FastAPI(
 
 
 # ============================================================
+# AUTHENTICATION SCHEMAS
+# ============================================================
+
+class RegisterRequest(BaseModel):
+
+    name: str
+    email: EmailStr
+    password: str
+
+
+class LoginRequest(BaseModel):
+
+    email: EmailStr
+    password: str
+
+
+class ProfileUpdateRequest(BaseModel):
+    name: str
+    email: EmailStr
+
+
+class SettingsUpdateRequest(BaseModel):
+    notifications: bool
+    sound: bool
+    camera: bool
+
+
+# ============================================================
+# AUTHENTICATION
+# ============================================================
+
+security = HTTPBearer()
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+
+    token = credentials.credentials
+
+    user_id = decode_access_token(token)
+
+    if user_id is None:
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired authentication token"
+        )
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if user is None:
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+
+    return user
+
+
+# ============================================================
+# REGISTER
+# ============================================================
+
+@app.post("/auth/register")
+def register(
+    data: RegisterRequest,
+    db: Session = Depends(get_db)
+):
+
+    name = data.name.strip()
+    email = data.email.lower().strip()
+
+    if not name:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Name is required"
+        )
+
+    if len(data.password) < 8:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 8 characters"
+        )
+
+    existing_user = db.query(User).filter(
+        User.email == email
+    ).first()
+
+    if existing_user:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Email is already registered"
+        )
+
+    user = User(
+        name=name,
+        email=email,
+        password_hash=hash_password(data.password)
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "success": True,
+        "message": "Account created successfully",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email
+        }
+    }
+
+
+# ============================================================
+# LOGIN
+# ============================================================
+
+@app.post("/auth/login")
+def login(
+    data: LoginRequest,
+    db: Session = Depends(get_db)
+):
+
+    email = data.email.lower().strip()
+
+    user = db.query(User).filter(
+        User.email == email
+    ).first()
+
+    if user is None or not verify_password(
+        data.password,
+        user.password_hash
+    ):
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
+
+    token = create_access_token(user.id)
+
+    return {
+        "success": True,
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email
+        }
+    }
+
+
+# ============================================================
+# CURRENT USER
+# ============================================================
+
+@app.get("/auth/me")
+def get_me(
+    current_user: User = Depends(get_current_user)
+):
+
+    return {
+        "success": True,
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "email": current_user.email,
+            "created_at": (
+                current_user.created_at.isoformat()
+                if current_user.created_at
+                else None
+            )
+        }
+    }
+
+
+# ============================================================
+# UPDATE CURRENT USER PROFILE
+# ============================================================
+
+@app.put("/auth/profile")
+def update_profile(
+    data: ProfileUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    name = data.name.strip()
+    email = data.email.lower().strip()
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Name is required")
+
+    existing_user = (
+        db.query(User)
+        .filter(User.email == email, User.id != current_user.id)
+        .first()
+    )
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email is already registered")
+
+    current_user.name = name
+    current_user.email = email
+    db.commit()
+    db.refresh(current_user)
+
+    return {
+        "success": True,
+        "message": "Profile updated successfully",
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "email": current_user.email,
+            "created_at": current_user.created_at.isoformat() if current_user.created_at else None
+        }
+    }
+
+
+# ============================================================
+# USER SETTINGS
+# ============================================================
+
+@app.get("/auth/settings")
+def get_settings(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    settings = (
+        db.query(UserSettings)
+        .filter(UserSettings.user_id == current_user.id)
+        .first()
+    )
+
+    if settings is None:
+        settings = UserSettings(user_id=current_user.id)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+
+    return {
+        "success": True,
+        "settings": {
+            "notifications": bool(settings.notifications),
+            "sound": bool(settings.sound),
+            "camera": bool(settings.camera)
+        }
+    }
+
+
+@app.put("/auth/settings")
+def update_settings(
+    data: SettingsUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    settings = (
+        db.query(UserSettings)
+        .filter(UserSettings.user_id == current_user.id)
+        .first()
+    )
+
+    if settings is None:
+        settings = UserSettings(user_id=current_user.id)
+        db.add(settings)
+
+    settings.notifications = data.notifications
+    settings.sound = data.sound
+    settings.camera = data.camera
+
+    db.commit()
+    db.refresh(settings)
+
+    return {
+        "success": True,
+        "message": "Settings updated successfully",
+        "settings": {
+            "notifications": bool(settings.notifications),
+            "sound": bool(settings.sound),
+            "camera": bool(settings.camera)
+        }
+    }
+
+
+# ============================================================
 # CORS
 # ============================================================
 
+# Frontend origins are configurable for local development and deployment.
+# Example:
+# ECO_SORT_FRONTEND_URLS=http://localhost:5173,http://127.0.0.1:5173
+frontend_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "ECO_SORT_FRONTEND_URLS",
+        "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=frontend_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -85,7 +421,8 @@ def root():
 @app.post("/predict")
 async def predict(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     allowed_types = [
@@ -187,7 +524,9 @@ async def predict(
                 1
                 if result["hazardous_warning"]
                 else 0
-            )
+            ),
+
+            user_id=current_user.id
         )
 
 
@@ -297,7 +636,8 @@ async def predict(
 
 @app.post("/predict-frame")
 async def predict_frame(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
 ):
 
     allowed_types = [
@@ -470,11 +810,13 @@ async def predict_frame(
 
 @app.get("/history")
 def get_history(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     scans = (
         db.query(Scan)
+        .filter(Scan.user_id == current_user.id)
         .order_by(
             Scan.timestamp.desc()
         )
@@ -542,11 +884,13 @@ def get_history(
 
 @app.get("/analytics")
 def get_analytics(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     scans = (
         db.query(Scan)
+        .filter(Scan.user_id == current_user.id)
         .all()
     )
 
@@ -694,11 +1038,13 @@ def get_analytics(
 
 @app.get("/eco-score")
 def get_eco_score(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     scans = (
         db.query(Scan)
+        .filter(Scan.user_id == current_user.id)
         .order_by(
             Scan.timestamp.asc()
         )
@@ -990,11 +1336,13 @@ def get_eco_score(
 
 @app.get("/eco-impact")
 def get_eco_impact(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     scans = (
         db.query(Scan)
+        .filter(Scan.user_id == current_user.id)
         .all()
     )
 
@@ -1092,11 +1440,13 @@ def get_eco_impact(
 
 @app.get("/gamification")
 def get_gamification(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     scans = (
         db.query(Scan)
+        .filter(Scan.user_id == current_user.id)
         .order_by(
             Scan.timestamp.asc()
         )

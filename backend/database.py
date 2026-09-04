@@ -4,10 +4,15 @@ from sqlalchemy import (
     Integer,
     String,
     Float,
-    DateTime
+    DateTime,
+    ForeignKey
 )
 
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import (
+    declarative_base,
+    sessionmaker,
+    relationship
+)
 
 from datetime import datetime
 
@@ -35,6 +40,72 @@ Base = declarative_base()
 
 
 # ============================================================
+# USER MODEL
+# ============================================================
+
+class User(Base):
+
+    __tablename__ = "users"
+
+    # --------------------------------------------------------
+    # User ID
+    # --------------------------------------------------------
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    # --------------------------------------------------------
+    # User name
+    # --------------------------------------------------------
+
+    name = Column(
+        String,
+        nullable=False
+    )
+
+    # --------------------------------------------------------
+    # Email
+    # --------------------------------------------------------
+
+    email = Column(
+        String,
+        unique=True,
+        index=True,
+        nullable=False
+    )
+
+    # --------------------------------------------------------
+    # Password hash
+    # --------------------------------------------------------
+
+    password_hash = Column(
+        String,
+        nullable=False
+    )
+
+    # --------------------------------------------------------
+    # Account creation timestamp
+    # --------------------------------------------------------
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    # --------------------------------------------------------
+    # User scans
+    # --------------------------------------------------------
+
+    scans = relationship(
+        "Scan",
+        back_populates="user"
+    )
+
+
+# ============================================================
 # SCAN MODEL
 # ============================================================
 
@@ -49,6 +120,17 @@ class Scan(Base):
     id = Column(
         Integer,
         primary_key=True,
+        index=True
+    )
+
+    # --------------------------------------------------------
+    # User ID
+    # --------------------------------------------------------
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
         index=True
     )
 
@@ -133,6 +215,15 @@ class Scan(Base):
     timestamp = Column(
         DateTime,
         default=datetime.utcnow
+    )
+
+    # --------------------------------------------------------
+    # Related user
+    # --------------------------------------------------------
+
+    user = relationship(
+        "User",
+        back_populates="scans"
     )
 
 

@@ -18,8 +18,7 @@ import {
   Info,
 } from "lucide-react";
 
-import AppLayout from "../components/AppLayout";
-import { API_URL } from "../config";
+import { apiFetch } from "../utils/api";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -99,7 +98,7 @@ export default function ScanWaste() {
 
       formData.append("file", file);
 
-      const response = await fetch(`${API_URL}/predict`, {
+      const response = await apiFetch("/predict", {
         method: "POST",
         body: formData,
       });
@@ -251,13 +250,10 @@ export default function ScanWaste() {
             "camera-scan.jpg"
           );
 
-          const response = await fetch(
-            `${API_URL}/predict-frame`,
-            {
-              method: "POST",
-              body: formData,
-            }
-          );
+          const response = await apiFetch("/predict-frame", {
+            method: "POST",
+            body: formData,
+          });
 
           if (!response.ok) {
             throw new Error(
@@ -312,8 +308,7 @@ export default function ScanWaste() {
   }
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-[#f6f8fa] text-[#111c2c]">
+    <div className="min-h-screen bg-[#f6f8fa] text-[#111c2c]">
 
         <main className="mx-auto max-w-[1050px] px-5 py-10 md:py-14">
 
@@ -724,8 +719,7 @@ export default function ScanWaste() {
 
         </main>
 
-      </div>
-    </AppLayout>
+    </div>
   );
 }
 
@@ -1028,24 +1022,34 @@ function ResultCard({ result, onReset }) {
 
       {/* FOOTER */}
 
-      <div className="flex flex-col gap-3 border-t border-[#e6ece8] bg-[#fbfdfc] p-4 sm:flex-row">
+      <div className="grid gap-3 border-t border-[#e6ece8] bg-[#fbfdfc] p-4 sm:grid-cols-3">
 
         <button
+          type="button"
           onClick={onReset}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#cbd9d1] py-3 text-[11px] font-bold text-[#087443] transition hover:bg-[#f3faf6]"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#cbd9d1] py-3 text-[11px] font-bold text-[#087443] transition hover:bg-[#f3faf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
         >
-          <RefreshCcw size={15} />
+          <RefreshCcw size={15} aria-hidden="true" />
 
           Scan Another
         </button>
 
         <NavLink
           to="/history"
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#078c51] py-3 text-[11px] font-bold text-white transition hover:bg-[#087845]"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#cbd9d1] bg-white py-3 text-[11px] font-bold text-[#087443] transition hover:bg-[#f3faf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
         >
           View History
 
-          <ArrowRight size={14} />
+          <ArrowRight size={14} aria-hidden="true" />
+        </NavLink>
+
+        <NavLink
+          to="/dashboard"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#078c51] py-3 text-[11px] font-bold text-white transition hover:bg-[#087845] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
+        >
+          Dashboard
+
+          <ArrowRight size={14} aria-hidden="true" />
         </NavLink>
 
       </div>

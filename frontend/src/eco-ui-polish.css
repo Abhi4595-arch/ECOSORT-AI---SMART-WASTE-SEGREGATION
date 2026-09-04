@@ -1,0 +1,178 @@
+/* ECO-SORT AI — Professional UI/UX polish
+   Loaded after index.css.
+*/
+
+:root {
+  --eco-ink: #173d2d;
+  --eco-muted: #667a6e;
+  --eco-green: #087443;
+  --eco-green-dark: #05613a;
+  --eco-surface: #ffffff;
+  --eco-page: #f5f7f9;
+  --eco-border: #e1e6e9;
+  --eco-focus: rgba(8, 116, 67, 0.28);
+}
+
+/* --------------------------------------------------
+   Base rendering
+-------------------------------------------------- */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--eco-page);
+  color: var(--eco-ink);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(8, 116, 67, 0.16);
+  color: var(--eco-ink);
+}
+
+/* --------------------------------------------------
+   Accessibility / keyboard navigation
+-------------------------------------------------- */
+
+:where(
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  [role="button"],
+  [tabindex]
+):focus-visible {
+  outline: 3px solid var(--eco-focus);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------
+   Media
+-------------------------------------------------- */
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+/* --------------------------------------------------
+   Scrollbars
+-------------------------------------------------- */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c8d5ce transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #c8d5ce;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #9eb4a7;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* --------------------------------------------------
+   Native controls
+-------------------------------------------------- */
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9aa7a1;
+}
+
+/* --------------------------------------------------
+   Shared ECO-SORT surfaces
+-------------------------------------------------- */
+
+.eco-surface {
+  background: var(--eco-surface);
+  border: 1px solid var(--eco-border);
+  box-shadow: 0 1px 2px rgba(23, 61, 45, 0.04);
+}
+
+.eco-interactive {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.eco-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(23, 61, 45, 0.08);
+}
+
+.eco-interactive:active {
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------
+   Accessibility: reduced motion
+-------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------
+   Mobile touch targets
+-------------------------------------------------- */
+
+@media (max-width: 767px) {
+  button,
+  [role="button"] {
+    min-height: 44px;
+  }
+}
