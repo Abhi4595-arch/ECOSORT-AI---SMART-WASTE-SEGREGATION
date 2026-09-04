@@ -1,184 +1,847 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
+/* =========================================================
+   ECO-SORT AI — Global Application Design System
+   Intelligent Waste Identification & Segregation Assistant
+   ========================================================= */
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+:root {
+  /* Brand */
+  --eco-primary: #087f5b;
+  --eco-primary-dark: #056044;
+  --eco-primary-deep: #033e35;
+  --eco-primary-soft: #e8f7f0;
+  --eco-primary-muted: #d5f0e5;
+
+  /* Accent */
+  --eco-lime: #84cc16;
+  --eco-lime-soft: #effbdc;
+
+  /* Semantic colors */
+  --eco-success: #168a5b;
+  --eco-success-soft: #e9f8f0;
+
+  --eco-warning: #c67a08;
+  --eco-warning-soft: #fff7df;
+
+  --eco-danger: #c94a4a;
+  --eco-danger-soft: #fff0f0;
+
+  --eco-info: #2878a8;
+  --eco-info-soft: #edf7fc;
+
+  /* Backgrounds */
+  --eco-bg: #f5f8f6;
+  --eco-bg-soft: #f8fbf9;
+  --eco-surface: #ffffff;
+  --eco-surface-muted: #f1f6f3;
+
+  /* Text */
+  --eco-text: #17352e;
+  --eco-text-strong: #0d2922;
+  --eco-text-muted: #60746d;
+  --eco-text-light: #8a9b95;
+
+  /* Borders */
+  --eco-border: #dfe9e4;
+  --eco-border-soft: #eaf1ed;
+  --eco-border-strong: #c9dbd3;
+
+  /* Shadows */
+  --eco-shadow-xs: 0 1px 2px rgba(15, 50, 40, 0.04);
+  --eco-shadow-sm: 0 4px 14px rgba(15, 50, 40, 0.06);
+  --eco-shadow-md: 0 10px 28px rgba(15, 50, 40, 0.08);
+  --eco-shadow-lg: 0 18px 45px rgba(15, 50, 40, 0.1);
+  --eco-shadow-brand: 0 12px 30px rgba(8, 127, 91, 0.16);
+
+  /* Radius */
+  --eco-radius-sm: 8px;
+  --eco-radius-md: 12px;
+  --eco-radius-lg: 16px;
+  --eco-radius-xl: 20px;
+  --eco-radius-2xl: 24px;
+
+  /* Motion */
+  --eco-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --eco-transition-fast: 160ms var(--eco-ease);
+  --eco-transition: 220ms var(--eco-ease);
+  --eco-transition-slow: 320ms var(--eco-ease);
+}
+
+/* =========================================================
+   Base
+   ========================================================= */
+
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background: var(--eco-bg);
+  color: var(--eco-text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+/* =========================================================
+   Selection
+   ========================================================= */
+
+::selection {
+  color: #ffffff;
+  background: var(--eco-primary);
+}
+
+/* =========================================================
+   Scrollbar
+   ========================================================= */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #b9cec5 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #b9cec5;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #94b7aa;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* =========================================================
+   Accessible Focus
+   ========================================================= */
+
+:focus-visible {
+  outline: 3px solid rgba(8, 127, 91, 0.28);
+  outline-offset: 3px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(8, 127, 91, 0.28);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   ECO-SORT Surface System
+   ========================================================= */
+
+.eco-surface {
+  background: var(--eco-surface);
+  border: 1px solid var(--eco-border);
+  border-radius: var(--eco-radius-lg);
+  box-shadow: var(--eco-shadow-sm);
+}
+
+.eco-surface-hover {
+  transition:
+    transform var(--eco-transition),
+    box-shadow var(--eco-transition),
+    border-color var(--eco-transition);
+}
+
+.eco-surface-hover:hover {
+  transform: translateY(-2px);
+  border-color: var(--eco-border-strong);
+  box-shadow: var(--eco-shadow-md);
+}
+
+.eco-card {
+  background: var(--eco-surface);
+  border: 1px solid var(--eco-border);
+  border-radius: var(--eco-radius-lg);
+  box-shadow: var(--eco-shadow-xs);
+  transition:
+    transform var(--eco-transition),
+    box-shadow var(--eco-transition),
+    border-color var(--eco-transition);
+}
+
+.eco-card:hover {
+  border-color: var(--eco-border-strong);
+  box-shadow: var(--eco-shadow-sm);
+}
+
+/* =========================================================
+   Brand Gradient
+   ========================================================= */
+
+.eco-gradient {
+  background:
+    linear-gradient(
+      135deg,
+      var(--eco-primary-deep) 0%,
+      var(--eco-primary) 58%,
+      #1a9b68 100%
+    );
+}
+
+.eco-gradient-soft {
+  background:
+    linear-gradient(
+      135deg,
+      #effaf5 0%,
+      #e6f7ef 50%,
+      #f6fbf8 100%
+    );
+}
+
+/* =========================================================
+   Typography Helpers
+   ========================================================= */
+
+.eco-page-title {
+  color: var(--eco-text-strong);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.eco-page-subtitle {
+  color: var(--eco-text-muted);
+  line-height: 1.65;
+}
+
+.eco-section-label {
+  color: var(--eco-primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   Buttons
+   ========================================================= */
+
+.eco-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform var(--eco-transition-fast),
+    box-shadow var(--eco-transition-fast),
+    background-color var(--eco-transition-fast),
+    border-color var(--eco-transition-fast),
+    color var(--eco-transition-fast);
+}
+
+.eco-btn:hover {
+  transform: translateY(-1px);
+}
+
+.eco-btn:active {
+  transform: translateY(0);
+}
+
+.eco-btn-primary {
+  color: #ffffff;
+  background: var(--eco-primary);
+  box-shadow: 0 6px 16px rgba(8, 127, 91, 0.16);
+}
+
+.eco-btn-primary:hover {
+  background: var(--eco-primary-dark);
+  box-shadow: 0 9px 22px rgba(8, 127, 91, 0.2);
+}
+
+.eco-btn-secondary {
+  color: var(--eco-primary-deep);
+  background: #ffffff;
+  border-color: var(--eco-border-strong);
+}
+
+.eco-btn-secondary:hover {
+  background: var(--eco-primary-soft);
+  border-color: #a9d8c4;
+}
+
+.eco-btn-danger {
+  color: #ffffff;
+  background: var(--eco-danger);
+}
+
+.eco-btn-ghost {
+  color: var(--eco-text-muted);
+  background: transparent;
+}
+
+.eco-btn-ghost:hover {
+  color: var(--eco-primary-dark);
+  background: var(--eco-primary-soft);
+}
+
+/* =========================================================
+   Badges / Status Pills
+   ========================================================= */
+
+.eco-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 26px;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.eco-badge-success {
+  color: #126947;
+  background: var(--eco-success-soft);
+}
+
+.eco-badge-warning {
+  color: #925b05;
+  background: var(--eco-warning-soft);
+}
+
+.eco-badge-danger {
+  color: #a63d3d;
+  background: var(--eco-danger-soft);
+}
+
+.eco-badge-info {
+  color: #21658c;
+  background: var(--eco-info-soft);
+}
+
+.eco-badge-primary {
+  color: var(--eco-primary-dark);
+  background: var(--eco-primary-soft);
+}
+
+/* =========================================================
+   Form Controls
+   ========================================================= */
+
+.eco-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0.7rem 0.85rem;
+  color: var(--eco-text);
+  background: #ffffff;
+  border: 1px solid var(--eco-border-strong);
+  border-radius: 10px;
+  transition:
+    border-color var(--eco-transition-fast),
+    box-shadow var(--eco-transition-fast),
+    background-color var(--eco-transition-fast);
+}
+
+.eco-input::placeholder {
+  color: var(--eco-text-light);
+}
+
+.eco-input:hover {
+  border-color: #abc8bd;
+}
+
+.eco-input:focus {
+  outline: none;
+  border-color: var(--eco-primary);
+  box-shadow: 0 0 0 4px rgba(8, 127, 91, 0.1);
+}
+
+/* =========================================================
+   Progress
+   ========================================================= */
+
+.eco-progress {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  background: #e7efeb;
+  border-radius: 999px;
+}
+
+.eco-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      90deg,
+      var(--eco-primary-dark),
+      var(--eco-primary),
+      #42a879
+    );
+  transition: width 500ms var(--eco-ease);
+}
+
+/* =========================================================
+   Empty / Error States
+   ========================================================= */
+
+.eco-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  padding: 2rem;
+  text-align: center;
+  background: var(--eco-bg-soft);
+  border: 1px dashed var(--eco-border-strong);
+  border-radius: var(--eco-radius-lg);
+}
+
+.eco-error {
+  padding: 1rem;
+  color: #8f3838;
+  background: var(--eco-danger-soft);
+  border: 1px solid #f0caca;
+  border-radius: var(--eco-radius-md);
+}
+
+/* =========================================================
+   Loading
+   ========================================================= */
+
+.eco-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e8efeb;
+  border-radius: 8px;
+}
+
+.eco-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.65),
+      transparent
+    );
+  animation: ecoSkeleton 1.35s infinite;
+}
+
+@keyframes ecoSkeleton {
+  100% {
+    transform: translateX(100%);
   }
 }
+
+/* =========================================================
+   AI Scan / Processing Animation
+   ========================================================= */
+
+.eco-scanning {
+  position: relative;
+  overflow: hidden;
+}
+
+.eco-scanning::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  top: 0;
+  background: var(--eco-primary);
+  box-shadow: 0 0 12px rgba(8, 127, 91, 0.55);
+  animation: ecoScanLine 1.8s ease-in-out infinite;
+}
+
+@keyframes ecoScanLine {
+  0%,
+  100% {
+    top: 0;
+    opacity: 0.45;
+  }
+
+  50% {
+    top: calc(100% - 2px);
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+   Success Animation
+   ========================================================= */
+
+.eco-success-pop {
+  animation: ecoSuccessPop 420ms var(--eco-ease);
+}
+
+@keyframes ecoSuccessPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  70% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =========================================================
+   Floating / Entrance Animations
+   ========================================================= */
+
+.eco-fade-up {
+  animation: ecoFadeUp 420ms var(--eco-ease) both;
+}
+
+@keyframes ecoFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.eco-float {
+  animation: ecoFloat 4s ease-in-out infinite;
+}
+
+@keyframes ecoFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* =========================================================
+   Counter / Small Highlight
+   ========================================================= */
+
+.counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.35rem 0.7rem;
+  margin-bottom: 24px;
+  color: var(--eco-primary-dark);
+  background: var(--eco-primary-soft);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 750;
+  transition:
+    border-color var(--eco-transition-fast),
+    background-color var(--eco-transition-fast),
+    transform var(--eco-transition-fast);
+}
+
+.counter:hover {
+  border-color: #acd9c5;
+  background: #def3e8;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   Legacy Hero Support
+   ========================================================= */
 
 .hero {
   position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
 }
+
+.hero .base,
+.hero .framework,
+.hero .vite {
+  inset-inline: 0;
+  margin: 0 auto;
+}
+
+.hero .base {
+  position: relative;
+  z-index: 0;
+  width: 170px;
+}
+
+.hero .framework,
+.hero .vite {
+  position: absolute;
+}
+
+.hero .framework {
+  z-index: 1;
+  top: 34px;
+  height: 28px;
+  transform:
+    perspective(2000px)
+    rotateZ(300deg)
+    rotateX(44deg)
+    rotateY(39deg)
+    scale(1.4);
+}
+
+.hero .vite {
+  z-index: 0;
+  top: 107px;
+  width: auto;
+  height: 26px;
+  transform:
+    perspective(2000px)
+    rotateZ(300deg)
+    rotateX(40deg)
+    rotateY(39deg)
+    scale(0.8);
+}
+
+/* =========================================================
+   Legacy Layout Support
+   ========================================================= */
 
 #center {
   display: flex;
+  flex-grow: 1;
   flex-direction: column;
   gap: 25px;
   place-content: center;
   place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
 }
 
 #next-steps {
   display: flex;
-  border-top: 1px solid var(--border);
   text-align: left;
+  border-top: 1px solid var(--eco-border);
+}
 
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
+#next-steps > div {
+  flex: 1 1 0;
+  padding: 32px;
+}
 
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
+#next-steps .icon {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 16px;
 }
 
 #docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+  border-right: 1px solid var(--eco-border);
 }
 
 #next-steps ul {
-  list-style: none;
-  padding: 0;
   display: flex;
   gap: 8px;
   margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
 
-  .logo {
-    height: 18px;
-  }
+#next-steps ul .logo {
+  height: 18px;
+}
 
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
+#next-steps ul a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  color: var(--eco-text-strong);
+  font-size: 16px;
+  text-decoration: none;
+  background: var(--eco-surface-muted);
+  border-radius: 8px;
+  transition:
+    box-shadow var(--eco-transition-fast),
+    transform var(--eco-transition-fast),
+    background-color var(--eco-transition-fast);
+}
 
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
+#next-steps ul a:hover {
+  background: var(--eco-primary-soft);
+  box-shadow: var(--eco-shadow-sm);
+  transform: translateY(-1px);
+}
 
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
+#next-steps ul a .button-icon {
+  width: 18px;
+  height: 18px;
 }
 
 #spacer {
   height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
+  border-top: 1px solid var(--eco-border);
 }
 
 .ticks {
   position: relative;
   width: 100%;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
+.ticks::before,
+.ticks::after {
+  position: absolute;
+  top: -4.5px;
+  width: 0;
+  height: 0;
+  content: "";
+  border: 5px solid transparent;
+}
+
+.ticks::before {
+  left: 0;
+  border-left-color: var(--eco-border);
+}
+
+.ticks::after {
+  right: 0;
+  border-right-color: var(--eco-border);
+}
+
+/* =========================================================
+   Responsive Polish
+   ========================================================= */
+
+@media (max-width: 1024px) {
+  #center {
+    gap: 18px;
+    padding: 32px 20px 24px;
   }
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
+  #next-steps {
+    flex-direction: column;
+    text-align: center;
   }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
+
+  #next-steps > div {
+    padding: 24px 20px;
+  }
+
+  #docs {
+    border-right: none;
+    border-bottom: 1px solid var(--eco-border);
+  }
+
+  #next-steps ul {
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  #next-steps ul li {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  #next-steps ul a {
+    box-sizing: border-box;
+    justify-content: center;
+    width: 100%;
+  }
+
+  #spacer {
+    height: 48px;
+  }
+}
+
+@media (max-width: 640px) {
+  .eco-btn {
+    min-height: 44px;
+  }
+
+  .eco-card {
+    border-radius: 14px;
+  }
+
+  .eco-surface {
+    border-radius: 14px;
+  }
+
+  #next-steps ul li {
+    flex-basis: 100%;
+  }
+}
+
+/* =========================================================
+   Reduced Motion Accessibility
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

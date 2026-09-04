@@ -26,3 +26,12 @@ Thumbs.db
 
 # Training dataset
 prepared_dataset/
+# Local database
+eco_sort.db
+*.db
+
+# Temporary uploaded files
+temp_uploads/
+
+# Generated evaluation/training artifacts
+model/training_history.json

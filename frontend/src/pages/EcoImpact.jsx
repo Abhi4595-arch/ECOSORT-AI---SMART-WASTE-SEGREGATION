@@ -85,22 +85,11 @@ export default function EcoImpact() {
     Math.max(0, safeNumber(impact.correctly_sorted_items))
   );
 
-  const categoryCounts = impact.category_counts || {};
+  const categoryCounts = normalizeCategoryCounts(impact);
 
-  const recyclable = Math.max(
-    0,
-    safeNumber(categoryCounts.Recyclable)
-  );
-
-  const organic = Math.max(
-    0,
-    safeNumber(categoryCounts.Organic)
-  );
-
-  const hazardous = Math.max(
-    0,
-    safeNumber(categoryCounts.Hazardous)
-  );
+  const recyclable = categoryCounts.Recyclable;
+  const organic = categoryCounts.Organic;
+  const hazardous = categoryCounts.Hazardous;
 
   const impactScore = clamp(
     safeNumber(impact.eco_impact_score),
@@ -114,7 +103,7 @@ export default function EcoImpact() {
       : 0;
 
   return (
-    <div className="eco-app-page min-h-screen bg-[#f5f7f9] text-[#111c2c]">
+    <div className="eco-app-page eco-page-enter min-h-screen bg-[#f5f7f9] text-[#111c2c]">
       <main
         className="mx-auto max-w-[1200px] px-4 py-7 sm:px-5 sm:py-8 md:px-8 md:py-10 lg:px-10"
         aria-labelledby="eco-impact-page-title"
@@ -141,9 +130,9 @@ export default function EcoImpact() {
 
         {/* IMPACT SCORE */}
         <section className="mt-8" aria-label="Eco Impact Score">
-          <div className="relative overflow-hidden rounded-[24px] bg-[#033e35] p-7 text-white shadow-lg md:p-9">
+          <div className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#043f35_0%,#075b46_52%,#087443_100%)] p-7 text-white shadow-[0_18px_45px_rgba(4,63,53,0.16)] md:p-9">
             <div
-              className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#087443]/30 blur-2xl"
+              className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#64c96a]/20 blur-3xl"
               aria-hidden="true"
             />
 
@@ -151,14 +140,14 @@ export default function EcoImpact() {
               <div className="max-w-[600px]">
                 <div className="flex items-center gap-3">
                   <div
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 shadow-inner"
                     aria-hidden="true"
                   >
                     <Sparkles size={22} />
                   </div>
 
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#9ed9b0]">
+                    <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#a9e5b7]">
                       Eco Impact Score
                     </p>
 
@@ -168,7 +157,7 @@ export default function EcoImpact() {
                   </div>
                 </div>
 
-                <p className="mt-5 text-[12px] leading-6 text-[#c4d8d1]">
+                <p className="mt-5 max-w-[560px] text-[12px] leading-6 text-[#d4e9e2]">
                   Your score reflects activity recorded by Eco-Sort
                   AI and is intended as an indicative product metric
                   for encouraging better sorting habits.
@@ -176,14 +165,14 @@ export default function EcoImpact() {
               </div>
 
               <div
-                className="flex h-40 w-40 shrink-0 flex-col items-center justify-center self-center rounded-full border-[10px] border-[#64c96a]/30 bg-white/5 md:self-auto"
+                className="flex h-40 w-40 shrink-0 flex-col items-center justify-center self-center rounded-full border-[10px] border-[#8be19a]/55 bg-white/10 shadow-[0_0_0_8px_rgba(255,255,255,0.035),0_12px_35px_rgba(0,0,0,0.12)] md:self-auto"
                 aria-label={`Eco Impact Score ${impactScore}`}
               >
                 <span className="text-[42px] font-black leading-none">
                   {impactScore}
                 </span>
 
-                <span className="mt-2 text-[9px] font-bold uppercase tracking-[0.08em] text-[#a7cfc0]">
+                <span className="mt-2 text-[9px] font-bold uppercase tracking-[0.08em] text-[#d7eee5]">
                   Impact Score
                 </span>
               </div>
@@ -260,7 +249,7 @@ export default function EcoImpact() {
         </section>
 
         {/* SORTING PROGRESS */}
-        <section className="mt-5 rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm sm:p-6">
+        <section className="eco-card eco-card-hover mt-5 rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="flex items-center gap-3">
@@ -320,7 +309,7 @@ export default function EcoImpact() {
         </section>
 
         {/* ECO TIP */}
-        <section className="mt-5 rounded-[20px] border border-[#dceee2] bg-[#f3faf5] p-6">
+        <section className="eco-surface mt-5 rounded-[20px] border border-[#dceee2] bg-[#f3faf5] p-6">
           <div className="flex items-start gap-4">
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#dff2e5] text-[#087443]"
@@ -386,7 +375,7 @@ function ImpactMetric({
   iconClass,
 }) {
   return (
-    <div className="rounded-[17px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="eco-card eco-card-hover rounded-[17px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div
         className={`flex h-11 w-11 items-center justify-center rounded-[13px] ${iconClass}`}
         aria-hidden="true"
@@ -421,7 +410,7 @@ function CategoryImpact({
   iconClass,
 }) {
   return (
-    <div className="rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-6">
+    <div className="eco-card eco-card-hover rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div
           className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] ${iconClass}`}
@@ -454,6 +443,66 @@ function CategoryImpact({
 /* =========================================================
    HELPERS
 ========================================================= */
+
+function normalizeCategoryCounts(data) {
+  const candidates = [
+    data?.category_counts,
+    data?.category_distribution,
+    data?.categories,
+    data?.waste_category_counts,
+    data?.categoryCount,
+  ];
+
+  const source =
+    candidates.find(
+      (value) => value && typeof value === "object" && !Array.isArray(value)
+    ) || {};
+
+  const read = (name, directKeys = []) => {
+    const aliases = [
+      name,
+      name.toLowerCase(),
+      name.toUpperCase(),
+      `${name.toLowerCase()}_count`,
+      ...directKeys,
+    ];
+
+    for (const key of aliases) {
+      if (source[key] !== undefined && source[key] !== null) {
+        const value = source[key];
+
+        if (value && typeof value === "object") {
+          if (value.count !== undefined) {
+            return Math.max(0, safeNumber(value.count));
+          }
+
+          if (value.total !== undefined) {
+            return Math.max(0, safeNumber(value.total));
+          }
+        }
+
+        return Math.max(0, safeNumber(value));
+      }
+    }
+
+    return 0;
+  };
+
+  return {
+    Recyclable: Math.max(
+      read("Recyclable", ["recyclable_items"]),
+      safeNumber(data?.recyclable_items)
+    ),
+    Organic: Math.max(
+      read("Organic", ["organic_items"]),
+      safeNumber(data?.organic_items)
+    ),
+    Hazardous: Math.max(
+      read("Hazardous", ["hazardous_items"]),
+      safeNumber(data?.hazardous_items)
+    ),
+  };
+}
 
 function safeNumber(value) {
   const number = Number(value);

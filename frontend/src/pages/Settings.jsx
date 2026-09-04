@@ -42,6 +42,7 @@ function normalizeSettings(value) {
 
 export default function Settings() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [savedSettings, setSavedSettings] = useState(DEFAULT_SETTINGS);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,7 +63,9 @@ export default function Settings() {
 
         if (!mounted) return;
 
-        setSettings(normalizeSettings(data?.settings));
+        const normalized = normalizeSettings(data?.settings);
+        setSettings(normalized);
+        setSavedSettings(normalized);
       } catch (requestError) {
         if (!mounted) return;
 
@@ -86,6 +89,11 @@ export default function Settings() {
     };
   }, []);
 
+  const hasUnsavedChanges =
+    settings.notifications !== savedSettings.notifications ||
+    settings.sound !== savedSettings.sound ||
+    settings.camera !== savedSettings.camera;
+
   function toggleSetting(key) {
     if (!(key in DEFAULT_SETTINGS)) {
       return;
@@ -101,7 +109,7 @@ export default function Settings() {
   }
 
   async function saveSettings() {
-    if (saving) {
+    if (saving || !hasUnsavedChanges) {
       return;
     }
 
@@ -124,8 +132,9 @@ export default function Settings() {
         body: JSON.stringify(payload),
       });
 
-      setSettings(normalizeSettings(data?.settings || payload));
-
+      const normalized = normalizeSettings(data?.settings || payload);
+      setSettings(normalized);
+      setSavedSettings(normalized);
       setSaved(true);
     } catch (requestError) {
       console.error("Settings save error:", requestError);
@@ -146,10 +155,11 @@ export default function Settings() {
     try {
       const data = await apiJson("/auth/settings");
 
-      setSettings({
-        ...DEFAULT_SETTINGS,
-        ...(data?.settings || {}),
-      });
+      const normalized = normalizeSettings(data?.settings);
+      setSettings(normalized);
+      setSavedSettings(normalized);
+      setSaved(false);
+      setSaveError("");
     } catch (requestError) {
       console.error("Settings retry error:", requestError);
 
@@ -181,7 +191,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="eco-app-page min-h-full bg-[#f5f8f6] text-[#10241b]">
+    <div className="eco-app-page eco-page-enter min-h-full bg-[#f5f8f6] text-[#10241b]">
       <main
         className="mx-auto max-w-[1050px] px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10"
         aria-labelledby="settings-page-title"
@@ -209,13 +219,19 @@ export default function Settings() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={saveSettings}
-              disabled={saving}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#087443] px-5 py-3 text-[11px] font-black text-white shadow-sm transition hover:bg-[#066238] focus:outline-none focus:ring-2 focus:ring-[#087443]/30 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-              aria-busy={saving}
-            >
+            <div className="flex flex-col items-stretch gap-2 sm:items-end">
+              <button
+                type="button"
+                onClick={saveSettings}
+                disabled={saving || !hasUnsavedChanges}
+                className={`eco-press inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-3 text-[11px] font-black text-white shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[#087443]/30 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  hasUnsavedChanges
+                    ? "bg-[#087443] hover:bg-[#066238]"
+                    : "bg-[#9ab6a6]"
+                }`}
+                aria-busy={saving}
+                title={hasUnsavedChanges ? "Save your preference changes" : "No unsaved preference changes"}
+              >
               {saving ? (
                 <LoaderCircle
                   size={16}
@@ -226,8 +242,14 @@ export default function Settings() {
                 <Save size={16} aria-hidden="true" />
               )}
 
-              {saving ? "Saving…" : "Save Changes"}
-            </button>
+                {saving ? "Saving…" : hasUnsavedChanges ? "Save Changes" : saved ? "Saved" : "No Changes"}
+              </button>
+              {!hasUnsavedChanges && !saving && (
+                <span className="text-right text-[9px] font-bold text-[#7a8b82]">
+                  Your preferences are up to date.
+                </span>
+              )}
+            </div>
           </div>
         </header>
 
@@ -264,7 +286,7 @@ export default function Settings() {
 
         {/* GENERAL PREFERENCES */}
         <section
-          className="mt-7 overflow-hidden rounded-[24px] border border-[#dce9e1] bg-white shadow-sm"
+          className="eco-card overflow-hidden mt-7 rounded-[24px] border border-[#dce9e1] bg-white shadow-sm"
           aria-labelledby="general-preferences-title"
         >
           <div className="border-b border-[#edf0f1] bg-[#fbfdfc] px-5 py-5 sm:px-6">
@@ -320,7 +342,7 @@ export default function Settings() {
 
         {/* AI & SCANNING */}
         <section
-          className="mt-5 rounded-[24px] border border-[#dce9e1] bg-white p-5 shadow-sm sm:p-6"
+          className="eco-card mt-5 rounded-[24px] border border-[#dce9e1] bg-white p-5 shadow-sm sm:p-6"
           aria-labelledby="ai-scanning-title"
         >
           <SectionHeader
@@ -346,7 +368,7 @@ export default function Settings() {
             />
           </div>
 
-          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-[#dcebe1] bg-[#f5faf7] p-4">
+          <div className="eco-surface mt-5 flex items-start gap-3 rounded-2xl border border-[#dcebe1] bg-[#f5faf7] p-4">
             <Info
               size={17}
               className="mt-0.5 shrink-0 text-[#087443]"
@@ -362,7 +384,7 @@ export default function Settings() {
 
         {/* PRIVACY & SAFETY */}
         <section
-          className="mt-5 rounded-[24px] border border-[#dce9e1] bg-white p-5 shadow-sm sm:p-6"
+          className="eco-card mt-5 rounded-[24px] border border-[#dce9e1] bg-white p-5 shadow-sm sm:p-6"
           aria-labelledby="privacy-safety-title"
         >
           <SectionHeader
@@ -434,7 +456,7 @@ function SettingRow({
         aria-checked={enabled}
         aria-label={`${title}: ${enabled ? "on" : "off"}`}
         onClick={onChange}
-        className={`relative h-7 w-12 shrink-0 rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#087443]/30 focus:ring-offset-2 ${
+        className={`eco-press relative h-7 w-12 shrink-0 rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#087443]/30 focus:ring-offset-2 ${
           enabled ? "bg-[#087443]" : "bg-[#cbd4cf]"
         }`}
       >
@@ -492,7 +514,7 @@ function InfoCard({
   description,
 }) {
   return (
-    <div className="rounded-2xl border border-[#e6ece8] bg-[#fafcfb] p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+    <div className="eco-interactive rounded-2xl border border-[#e6ece8] bg-[#fafcfb] p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#edf8f1] text-[#087443]"
@@ -523,7 +545,7 @@ function InfoCard({
 
 function PrivacyCard({ title, description }) {
   return (
-    <div className="rounded-2xl border border-[#e6ece8] bg-[#fafcfb] p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+    <div className="eco-interactive rounded-2xl border border-[#e6ece8] bg-[#fafcfb] p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-sm">
       <div className="flex items-start gap-3">
         <ShieldCheck
           size={17}

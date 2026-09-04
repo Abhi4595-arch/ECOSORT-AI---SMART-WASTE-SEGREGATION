@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* =========================================================
+   ECO-SORT AI — Global Styles
+   ========================================================= */
+
 :root {
   font-family:
     Inter,
@@ -10,14 +14,20 @@
     "Segoe UI",
     sans-serif;
 
-  color: #101b2d;
-  background: #f7faf8;
+  color: #17352e;
+  background: #f5f8f6;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  color-scheme: light;
 }
+
+/* =========================================================
+   Box Model
+   ========================================================= */
 
 *,
 *::before,
@@ -25,19 +35,29 @@
   box-sizing: border-box;
 }
 
+/* =========================================================
+   Document
+   ========================================================= */
+
 html {
-  scroll-behavior: smooth;
   min-width: 320px;
-  background: #f7faf8;
+  min-height: 100%;
+  background: #f5f8f6;
+  scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f7faf8;
+  margin: 0;
   overflow-x: hidden;
+  background: #f5f8f6;
+  color: #17352e;
 }
+
+/* =========================================================
+   Form Elements
+   ========================================================= */
 
 button,
 input,
@@ -48,11 +68,22 @@ select {
 
 button {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:disabled {
   cursor: not-allowed;
 }
+
+input,
+textarea,
+select {
+  color: inherit;
+}
+
+/* =========================================================
+   Media
+   ========================================================= */
 
 img,
 svg,
@@ -61,18 +92,46 @@ canvas {
   max-width: 100%;
 }
 
-img {
+img,
+video,
+canvas {
   display: block;
 }
+
+/* =========================================================
+   Links
+   ========================================================= */
 
 a {
   color: inherit;
   text-decoration: none;
 }
 
+/* =========================================================
+   Accessible Focus
+   ========================================================= */
+
+:focus-visible {
+  outline: 3px solid rgba(8, 127, 91, 0.28);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   Text Selection
+   ========================================================= */
+
 ::selection {
-  background: #bfe8ce;
-  color: #062f25;
+  color: #ffffff;
+  background: #087f5b;
+}
+
+/* =========================================================
+   Scrollbar
+   ========================================================= */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #b9cec5 transparent;
 }
 
 ::-webkit-scrollbar {
@@ -81,20 +140,47 @@ a {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f0f5f2;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #b5c8bc;
+  background: #b9cec5;
+  border: 2px solid transparent;
   border-radius: 999px;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #087443;
+  background: #87aa9c;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
+
+/* =========================================================
+   Mobile
+   ========================================================= */
 
 @media (max-width: 640px) {
   html {
     scroll-behavior: auto;
+  }
+}
+
+/* =========================================================
+   Reduced Motion
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

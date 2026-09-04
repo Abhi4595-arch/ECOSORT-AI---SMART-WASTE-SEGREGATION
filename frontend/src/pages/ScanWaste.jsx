@@ -44,10 +44,20 @@ export default function ScanWaste() {
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const previewUrlRef = useRef("");
+
 
   useEffect(() => {
     return () => {
-      stopCamera();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = "";
+      }
     };
   }, []);
 
@@ -78,9 +88,14 @@ export default function ScanWaste() {
       return;
     }
 
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+    }
+
     setFile(selectedFile);
 
     const imageUrl = URL.createObjectURL(selectedFile);
+    previewUrlRef.current = imageUrl;
 
     setPreview(imageUrl);
   }
@@ -285,6 +300,11 @@ export default function ScanWaste() {
   function resetScanner() {
     stopCamera();
 
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = "";
+    }
+
     setFile(null);
     setPreview("");
     setResult(null);
@@ -308,21 +328,21 @@ export default function ScanWaste() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f8fa] text-[#111c2c]">
+    <div className="eco-page-enter min-h-screen bg-[#f5f8f6] text-[#111c2c]">
 
-        <main className="mx-auto max-w-[1050px] px-5 py-10 md:py-14">
+        <main className="mx-auto max-w-[1050px] px-4 py-8 sm:px-5 sm:py-10 md:py-14">
 
           {/* ================= HERO ================= */}
 
           <div className="text-center">
 
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#bcebd1] bg-[#effbf4] px-4 py-2 text-[11px] font-bold text-[#087443]">
+            <div className="eco-badge eco-badge-green mx-auto inline-flex items-center gap-2 px-4 py-2 text-[10px] font-bold sm:text-[11px]">
               <Sparkles size={14} />
 
               AI-POWERED WASTE CLASSIFICATION
             </div>
 
-            <h1 className="mx-auto mt-6 max-w-[850px] text-[38px] font-black leading-[1.05] tracking-[-0.055em] sm:text-[52px] md:text-[62px]">
+            <h1 className="mx-auto mt-5 max-w-[850px] text-[34px] font-black leading-[1.05] tracking-[-0.055em] sm:mt-6 sm:text-[50px] md:text-[62px]">
               Turn every piece of waste into{" "}
               <span className="text-[#078c51]">
                 the right decision.
@@ -339,7 +359,7 @@ export default function ScanWaste() {
 
           {/* ================= SCANNER ================= */}
 
-          <div className="mx-auto mt-10 max-w-[760px] rounded-[22px] border border-[#dfe7e3] bg-white p-5 shadow-[0_20px_60px_rgba(16,45,34,0.08)] md:p-7">
+          <div className="eco-card mx-auto mt-8 max-w-[760px] rounded-[24px] border border-[#dfe7e3] bg-white p-4 shadow-[0_20px_60px_rgba(16,45,34,0.08)] sm:mt-10 sm:p-5 md:p-7">
 
             {/* TABS */}
 
@@ -383,7 +403,7 @@ export default function ScanWaste() {
                     onClick={() =>
                       fileInputRef.current?.click()
                     }
-                    className="group flex min-h-[340px] w-full flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-[#9be9c0] bg-[#f7fffa] px-5 text-center transition hover:border-[#0ba460] hover:bg-[#f1fff7]"
+                    className="eco-interactive group flex min-h-[300px] w-full flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-[#9be9c0] bg-[#f7fffa] px-5 text-center transition hover:border-[#0ba460] hover:bg-[#f1fff7] sm:min-h-[340px]"
                   >
 
                     <div className="flex h-20 w-20 items-center justify-center rounded-[22px] bg-[#d8f8e5] text-[#079c59] transition group-hover:scale-105">
@@ -419,12 +439,14 @@ export default function ScanWaste() {
                       <img
                         src={preview}
                         alt="Waste preview"
-                        className="h-[380px] w-full object-contain"
+                        className="h-[300px] w-full object-contain sm:h-[380px]"
                       />
 
                       <button
                         onClick={resetScanner}
-                        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#52606d] shadow-lg transition hover:scale-105"
+                        aria-label="Remove selected image"
+                        title="Remove selected image"
+                        className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-[#52606d] shadow-lg transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2 sm:right-4 sm:top-4"
                       >
                         <X size={17} />
                       </button>
@@ -436,7 +458,7 @@ export default function ScanWaste() {
                       <button
                         onClick={analyzeImage}
                         disabled={loading}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#078c51] py-3.5 text-[12px] font-bold text-white shadow-lg shadow-[#078c51]/20 transition hover:bg-[#087845] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="eco-press flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[#078c51] py-3.5 text-[12px] font-bold text-white shadow-lg shadow-[#078c51]/20 transition hover:bg-[#087845] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
                       >
 
                         {loading ? (
@@ -463,7 +485,7 @@ export default function ScanWaste() {
                           fileInputRef.current?.click()
                         }
                         disabled={loading}
-                        className="rounded-xl border border-[#cbd8d1] bg-white px-6 py-3.5 text-[12px] font-bold text-[#087443] disabled:opacity-50"
+                        className="eco-press min-h-12 rounded-xl border border-[#cbd8d1] bg-white px-6 py-3.5 text-[12px] font-bold text-[#087443] transition hover:bg-[#f3faf6] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
                       >
                         Change Image
                       </button>
@@ -497,7 +519,7 @@ export default function ScanWaste() {
                     autoPlay
                     playsInline
                     muted
-                    className="aspect-video w-full object-cover"
+                    className="aspect-video w-full object-cover" aria-label="Live waste scanning camera"
                   />
 
                   {!cameraActive && (
@@ -1027,7 +1049,7 @@ function ResultCard({ result, onReset }) {
         <button
           type="button"
           onClick={onReset}
-          className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#cbd9d1] py-3 text-[11px] font-bold text-[#087443] transition hover:bg-[#f3faf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
+          className="eco-press flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#cbd9d1] py-3 text-[11px] font-bold text-[#087443] transition hover:bg-[#f3faf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
         >
           <RefreshCcw size={15} aria-hidden="true" />
 

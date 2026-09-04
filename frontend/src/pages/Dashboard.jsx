@@ -91,65 +91,93 @@ export default function Dashboard() {
 
   const latestScan = history[0] || null;
 
-  const totalScans = Math.max(
+  /*
+   * Analytics has had a few response shapes during development.
+   * Prefer real analytics category data, but fall back to the user's
+   * history when category counts are missing or all zero.
+   */
+  const historyCategoryCounts = getHistoryCategoryCounts(history);
+
+  const analyticsTotalScans = Math.max(
     0,
     Number(analytics?.total_scans ?? 0)
   );
 
+  const totalScans =
+    analyticsTotalScans > 0
+      ? analyticsTotalScans
+      : history.length;
+
+  const historyAverageConfidence =
+    getHistoryAverageConfidence(history);
+
+  const analyticsAverageConfidence = Number(
+    analytics?.average_confidence ?? 0
+  );
+
   const averageConfidence = clamp(
-    Number(analytics?.average_confidence ?? 0),
+    analyticsAverageConfidence > 0
+      ? analyticsAverageConfidence
+      : historyAverageConfidence,
     0,
     100
   );
 
-  const lowConfidence = Math.max(
+  const historyLowConfidence =
+    getHistoryLowConfidenceCount(history);
+
+  const analyticsLowConfidence = Math.max(
     0,
     Number(analytics?.low_confidence_scans ?? 0)
   );
+
+  const lowConfidence =
+    analytics?.low_confidence_scans != null
+      ? analyticsLowConfidence
+      : historyLowConfidence;
 
   const highConfidence = Math.max(
     totalScans - lowConfidence,
     0
   );
 
-  const recyclable = Math.max(
-    0,
-    Number(analytics?.category_counts?.Recyclable ?? 0)
-  );
+  const analyticsCategoryCounts =
+    getAnalyticsCategoryCounts(analytics);
 
-  const organic = Math.max(
-    0,
-    Number(analytics?.category_counts?.Organic ?? 0)
-  );
+  const hasAnalyticsCategoryData =
+    analyticsCategoryCounts.Recyclable +
+      analyticsCategoryCounts.Organic +
+      analyticsCategoryCounts.Hazardous >
+    0;
 
-  const hazardous = Math.max(
-    0,
-    Number(analytics?.category_counts?.Hazardous ?? 0)
-  );
+  const categoryCounts = hasAnalyticsCategoryData
+    ? analyticsCategoryCounts
+    : historyCategoryCounts;
 
-  const recyclablePercentage = clamp(
-    Number(
-      analytics?.category_percentages?.Recyclable ?? 0
-    ),
-    0,
-    100
-  );
+  const recyclable = categoryCounts.Recyclable;
+  const organic = categoryCounts.Organic;
+  const hazardous = categoryCounts.Hazardous;
 
-  const organicPercentage = clamp(
-    Number(
-      analytics?.category_percentages?.Organic ?? 0
-    ),
-    0,
-    100
-  );
+  const analyticsCategoryPercentages =
+    getAnalyticsCategoryPercentages(analytics);
 
-  const hazardousPercentage = clamp(
-    Number(
-      analytics?.category_percentages?.Hazardous ?? 0
-    ),
-    0,
-    100
-  );
+  const hasAnalyticsPercentageData =
+    analyticsCategoryPercentages.Recyclable +
+      analyticsCategoryPercentages.Organic +
+      analyticsCategoryPercentages.Hazardous >
+    0;
+
+  const recyclablePercentage = hasAnalyticsPercentageData
+    ? analyticsCategoryPercentages.Recyclable
+    : getPercentage(recyclable, totalScans);
+
+  const organicPercentage = hasAnalyticsPercentageData
+    ? analyticsCategoryPercentages.Organic
+    : getPercentage(organic, totalScans);
+
+  const hazardousPercentage = hasAnalyticsPercentageData
+    ? analyticsCategoryPercentages.Hazardous
+    : getPercentage(hazardous, totalScans);
 
   const score = clamp(
     Math.round(Number(ecoScore?.eco_sort_score ?? 0)),
@@ -187,8 +215,9 @@ export default function Dashboard() {
     ? gamification.badges
     : [];
 
-  const latestCategory =
-    latestScan?.category || "Organic";
+  const latestCategory = normalizeCategory(
+    latestScan
+  );
 
   const categoryConfig = {
     Recyclable: {
@@ -256,7 +285,7 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#f5f7f9] px-5 py-10 md:px-8 lg:px-10">
+      <div className="min-h-screen bg-[#f5f8f6] px-4 py-8 sm:px-5 md:px-8 lg:px-10">
         <div className="mx-auto max-w-[900px]">
           <RetryState
             title="Dashboard unavailable"
@@ -271,20 +300,28 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="eco-app-page min-h-screen bg-[#f5f7f9] text-[#111c2c]">
+    <div className="relative eco-app-page min-h-screen overflow-hidden bg-[#f5f8f6] text-[#111c2c]">
+      <div
+        className="pointer-events-none absolute -right-32 -top-40 h-96 w-96 rounded-full bg-[#e3f4e8] blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute left-[-180px] top-[420px] h-80 w-80 rounded-full bg-[#eef8f1] blur-3xl"
+        aria-hidden="true"
+      />
       {/* =====================================================
           TOP AREA
       ====================================================== */}
 
       <section
-        className="px-5 pt-8 md:px-8 lg:px-9"
+        className="relative z-10 px-4 pt-7 sm:px-5 sm:pt-8 md:px-8 lg:px-9"
         aria-labelledby="dashboard-heading"
       >
         <div className="flex flex-col justify-between gap-5 xl:flex-row xl:items-center">
           <div>
             <h1
               id="dashboard-heading"
-              className="text-[29px] font-black tracking-[-0.045em]"
+              className="text-[28px] font-black tracking-[-0.045em] sm:text-[30px]"
             >
               Hello, {firstName}!
               <span
@@ -341,7 +378,7 @@ export default function Dashboard() {
               className="flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
             >
               <div
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#06352c] text-[#72c866]"
+                className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-white bg-[#06352c] text-[#72c866] shadow-sm"
                 aria-hidden="true"
               >
                 <Leaf size={22} />
@@ -366,7 +403,7 @@ export default function Dashboard() {
       ====================================================== */}
 
       <section
-        className="grid gap-4 px-5 pt-7 sm:grid-cols-2 md:px-8 lg:grid-cols-4 lg:px-9"
+        className="relative z-10 grid gap-4 px-4 pt-6 sm:grid-cols-2 sm:px-5 md:px-8 lg:grid-cols-4 lg:px-9"
         aria-label="Dashboard metrics"
       >
         <DashboardMetricLink
@@ -401,7 +438,7 @@ export default function Dashboard() {
         />
 
         <DashboardMetricLink
-          to="/eco-impact"
+          to="/impact"
           icon={Leaf}
           iconClass="bg-[#fff0c8] text-[#e6a400]"
           label="Estimated Diversion"
@@ -420,10 +457,10 @@ export default function Dashboard() {
           MAIN CONTENT
       ====================================================== */}
 
-      <section className="grid gap-5 px-5 py-5 md:px-8 lg:grid-cols-[1.65fr_.9fr] lg:px-9">
+      <section className="relative z-10 grid gap-5 px-4 py-5 sm:px-5 md:px-8 lg:grid-cols-[1.65fr_.9fr] lg:px-9">
         {/* LATEST SCAN */}
 
-        <div className="rounded-[18px] border border-[#e0e6e9] bg-white p-5 shadow-sm">
+        <div className="rounded-[20px] border border-[#dfe8e2] bg-white p-5 shadow-[0_8px_28px_rgba(20,63,40,.045)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#84909c]">
@@ -447,7 +484,7 @@ export default function Dashboard() {
               {/* VISUAL */}
 
               <div>
-                <div className="relative flex min-h-[285px] items-center justify-center overflow-hidden rounded-[16px] bg-[#edf2ef] p-5">
+                <div className="relative flex min-h-[285px] items-center justify-center overflow-hidden rounded-[18px] border border-[#e0e9e3] bg-[#edf5ef] p-5">
                   <div
                     className="absolute inset-0 bg-[radial-gradient(circle_at_70%_65%,white,transparent_38%)]"
                     aria-hidden="true"
@@ -490,7 +527,7 @@ export default function Dashboard() {
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <NavLink
                     to="/scan"
-                    className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#087443] py-2.5 text-[11px] font-bold text-white transition hover:bg-[#066238] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
+                    className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#087443] py-2.5 text-[11px] font-bold text-white shadow-sm shadow-[#087443]/10 transition hover:-translate-y-0.5 hover:bg-[#066238] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
                   >
                     <Camera
                       size={15}
@@ -501,7 +538,7 @@ export default function Dashboard() {
 
                   <NavLink
                     to="/history"
-                    className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#cfe0d6] bg-white py-2.5 text-[11px] font-bold text-[#087443] transition hover:bg-[#f2faf5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
+                    className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#cfe0d6] bg-white py-2.5 text-[11px] font-bold text-[#087443] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f2faf5] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
                   >
                     History
                     <ArrowRight
@@ -641,7 +678,7 @@ export default function Dashboard() {
 
         {/* ECO SCORE */}
 
-        <div className="rounded-[18px] border border-[#e0e6e9] bg-white p-5 shadow-sm">
+        <div className="rounded-[20px] border border-[#dfe8e2] bg-white p-5 shadow-[0_8px_28px_rgba(20,63,40,.045)]">
           <div className="flex items-center justify-between">
             <h2 className="text-[17px] font-black">
               Eco-Sort Score
@@ -822,10 +859,10 @@ export default function Dashboard() {
           LOWER SECTION
       ====================================================== */}
 
-      <section className="grid gap-5 px-5 pb-5 md:px-8 lg:grid-cols-[1.65fr_.9fr] lg:px-9">
+      <section className="relative z-10 grid gap-5 px-4 pb-5 sm:px-5 md:px-8 lg:grid-cols-[1.65fr_.9fr] lg:px-9">
         {/* ANALYTICS */}
 
-        <div className="rounded-[18px] border border-[#e0e6e9] bg-white p-5 shadow-sm">
+        <div className="rounded-[20px] border border-[#dfe8e2] bg-white p-5 shadow-[0_8px_28px_rgba(20,63,40,.045)]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#84909c]">
@@ -981,7 +1018,7 @@ export default function Dashboard() {
 
         {/* GAMIFICATION */}
 
-        <div className="rounded-[18px] border border-[#e0e6e9] bg-white p-5 shadow-sm">
+        <div className="rounded-[20px] border border-[#dfe8e2] bg-white p-5 shadow-[0_8px_28px_rgba(20,63,40,.045)]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#84909c]">
@@ -1132,7 +1169,7 @@ export default function Dashboard() {
       ====================================================== */}
 
       <section
-        className="grid gap-4 px-5 pb-5 md:grid-cols-3 md:px-8 lg:px-9"
+        className="relative z-10 grid gap-4 px-4 pb-5 sm:px-5 md:grid-cols-3 md:px-8 lg:px-9"
         aria-label="Quick actions"
       >
         <QuickAction
@@ -1143,7 +1180,7 @@ export default function Dashboard() {
         />
 
         <QuickAction
-          to="/eco-impact"
+          to="/impact"
           icon={Globe2}
           title="Eco Impact"
           description="See the environmental impact of your activity."
@@ -1161,7 +1198,7 @@ export default function Dashboard() {
           DISCLAIMER
       ====================================================== */}
 
-      <div className="mx-5 mb-5 rounded-lg bg-[#033e35] px-5 py-3 text-[9px] leading-5 text-white md:mx-8 lg:mx-9">
+      <div className="relative z-10 mx-4 mb-5 rounded-[14px] bg-[#033e35] sm:mx-5 px-5 py-3 text-[9px] leading-5 text-white md:mx-8 lg:mx-9">
         <Leaf
           size={14}
           aria-hidden="true"
@@ -1192,7 +1229,7 @@ function DashboardMetricLink({
   return (
     <NavLink
       to={to}
-      className="group rounded-[16px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
+      className="group rounded-[18px] border border-[#dfe8e2] bg-white p-5 shadow-[0_8px_28px_rgba(20,63,40,.05)] transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
       aria-label={`${label}: ${value}. ${subtitle}`}
     >
       <div className="flex items-center justify-between gap-4">
@@ -1479,7 +1516,7 @@ function QuickAction({
   return (
     <NavLink
       to={to}
-      className="group rounded-[16px] border border-[#dfe7e2] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
+      className="group rounded-[18px] border border-[#dfe7e2] bg-white p-5 shadow-[0_8px_26px_rgba(20,63,40,.05)] transition duration-200 hover:-translate-y-1 hover:border-[#cfe1d5] hover:shadow-[0_16px_36px_rgba(20,63,40,.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2"
     >
       <div className="flex items-center gap-4">
         <div
@@ -1542,6 +1579,288 @@ function EmptyScan() {
         Start Scanning
       </NavLink>
     </div>
+  );
+}
+
+/* =========================================================
+   DATA NORMALIZATION
+========================================================= */
+
+function normalizeCategory(scan) {
+  const rawCategory =
+    scan?.category ??
+    scan?.predicted_category ??
+    scan?.predictedCategory ??
+    scan?.waste_category ??
+    scan?.wasteCategory ??
+    scan?.classification ??
+    scan?.label ??
+    scan?.result?.category ??
+    scan?.prediction?.category ??
+    "";
+
+  const value = String(rawCategory)
+    .trim()
+    .toLowerCase();
+
+  if (
+    value.includes("recycl") ||
+    value.includes("plastic") ||
+    value.includes("paper") ||
+    value.includes("glass") ||
+    value.includes("metal")
+  ) {
+    return "Recyclable";
+  }
+
+  if (
+    value.includes("organic") ||
+    value.includes("food") ||
+    value.includes("compost") ||
+    value.includes("biodegrad")
+  ) {
+    return "Organic";
+  }
+
+  if (
+    value.includes("hazard") ||
+    value.includes("medical") ||
+    value.includes("battery") ||
+    value.includes("chemical") ||
+    value.includes("e-waste") ||
+    value.includes("e waste")
+  ) {
+    return "Hazardous";
+  }
+
+  return "";
+}
+
+function getHistoryCategoryCounts(scans) {
+  const counts = {
+    Recyclable: 0,
+    Organic: 0,
+    Hazardous: 0,
+  };
+
+  if (!Array.isArray(scans)) {
+    return counts;
+  }
+
+  scans.forEach((scan) => {
+    const category = normalizeCategory(scan);
+
+    if (category) {
+      counts[category] += 1;
+    }
+  });
+
+  return counts;
+}
+
+function getAnalyticsCategoryCounts(analytics) {
+  const sources = [
+    analytics?.category_counts,
+    analytics?.category_distribution,
+    analytics?.categories,
+    analytics?.waste_category_counts,
+  ];
+
+  const counts = {
+    Recyclable: 0,
+    Organic: 0,
+    Hazardous: 0,
+  };
+
+  sources.forEach((source) => {
+    if (!source || typeof source !== "object") {
+      return;
+    }
+
+    counts.Recyclable = Math.max(
+      counts.Recyclable,
+      getCategoryValue(
+        source,
+        "Recyclable",
+        "recyclable",
+        "recyclable_count"
+      )
+    );
+
+    counts.Organic = Math.max(
+      counts.Organic,
+      getCategoryValue(
+        source,
+        "Organic",
+        "organic",
+        "organic_count"
+      )
+    );
+
+    counts.Hazardous = Math.max(
+      counts.Hazardous,
+      getCategoryValue(
+        source,
+        "Hazardous",
+        "hazardous",
+        "hazardous_count"
+      )
+    );
+  });
+
+  return counts;
+}
+
+function getCategoryValue(source, ...keys) {
+  for (const key of keys) {
+    const value = source?.[key];
+
+    if (typeof value === "number") {
+      return Math.max(0, value);
+    }
+
+    if (typeof value === "string" && value.trim() !== "") {
+      const numeric = Number(value);
+
+      if (Number.isFinite(numeric)) {
+        return Math.max(0, numeric);
+      }
+    }
+
+    if (
+      value &&
+      typeof value === "object" &&
+      value.count != null
+    ) {
+      const numeric = Number(value.count);
+
+      if (Number.isFinite(numeric)) {
+        return Math.max(0, numeric);
+      }
+    }
+  }
+
+  return 0;
+}
+
+function getAnalyticsCategoryPercentages(analytics) {
+  const source =
+    analytics?.category_percentages ||
+    analytics?.category_distribution_percentages ||
+    analytics?.percentages ||
+    {};
+
+  return {
+    Recyclable: clamp(
+      getCategoryValue(
+        source,
+        "Recyclable",
+        "recyclable",
+        "recyclable_percentage"
+      ),
+      0,
+      100
+    ),
+    Organic: clamp(
+      getCategoryValue(
+        source,
+        "Organic",
+        "organic",
+        "organic_percentage"
+      ),
+      0,
+      100
+    ),
+    Hazardous: clamp(
+      getCategoryValue(
+        source,
+        "Hazardous",
+        "hazardous",
+        "hazardous_percentage"
+      ),
+      0,
+      100
+    ),
+  };
+}
+
+function getHistoryAverageConfidence(scans) {
+  if (!Array.isArray(scans) || scans.length === 0) {
+    return 0;
+  }
+
+  const values = scans
+    .map((scan) =>
+      Number(
+        scan?.confidence ??
+          scan?.confidence_score ??
+          scan?.prediction_confidence ??
+          scan?.prediction?.confidence ??
+          0
+      )
+    )
+    .filter(
+      (value) => Number.isFinite(value) && value > 0
+    )
+    .map((value) =>
+      value <= 1 ? value * 100 : value
+    );
+
+  if (values.length === 0) {
+    return 0;
+  }
+
+  return (
+    values.reduce((sum, value) => sum + value, 0) /
+    values.length
+  );
+}
+
+function getHistoryLowConfidenceCount(scans) {
+  if (!Array.isArray(scans)) {
+    return 0;
+  }
+
+  return scans.filter((scan) => {
+    if (scan?.review_required === true) {
+      return true;
+    }
+
+    const rawConfidence =
+      scan?.confidence ??
+      scan?.confidence_score ??
+      scan?.prediction_confidence ??
+      scan?.prediction?.confidence;
+
+    if (rawConfidence == null) {
+      return false;
+    }
+
+    const numeric = Number(rawConfidence);
+
+    if (!Number.isFinite(numeric)) {
+      return false;
+    }
+
+    const confidence =
+      numeric <= 1 ? numeric * 100 : numeric;
+
+    return confidence < 60;
+  }).length;
+}
+
+function getPercentage(value, total) {
+  if (
+    !Number.isFinite(Number(total)) ||
+    Number(total) <= 0
+  ) {
+    return 0;
+  }
+
+  return clamp(
+    (Number(value) / Number(total)) * 100,
+    0,
+    100
   );
 }
 

@@ -248,7 +248,7 @@ export default function Gamification() {
   ];
 
   return (
-    <div className="eco-app-page min-h-screen bg-[#f5f7f9] text-[#111c2c]">
+    <div className="eco-app-page eco-page-enter min-h-screen bg-[#f5f7f9] text-[#111c2c]">
       <main
         className="mx-auto max-w-[1200px] px-4 py-7 sm:px-5 sm:py-8 md:px-8 md:py-10 lg:px-10"
         aria-labelledby="gamification-page-title"
@@ -281,24 +281,24 @@ export default function Gamification() {
           className="mt-8"
           aria-label="Current level"
         >
-          <div className="relative overflow-hidden rounded-[24px] bg-[#033e35] p-7 text-white shadow-lg md:p-9">
+          <div className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#043f35_0%,#075b46_52%,#087443_100%)] p-7 text-white shadow-[0_18px_45px_rgba(4,63,53,0.16)] md:p-9">
             <div
-              className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#087443]/30 blur-3xl"
+              className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#64c96a]/20 blur-3xl"
               aria-hidden="true"
             />
 
-            <div className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
+            <div className="relative grid gap-7 md:grid-cols-[1fr_auto] md:items-center">
               <div>
                 <div className="flex items-center gap-4">
                   <div
-                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#64c96a] text-[#033e35] shadow-lg"
+                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#64c96a] text-[#033e35] shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
                     aria-hidden="true"
                   >
                     <Trophy size={29} />
                   </div>
 
                   <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#9ed9b0]">
+                    <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#a9e5b7]">
                       Current Level
                     </p>
 
@@ -308,7 +308,7 @@ export default function Gamification() {
                   </div>
                 </div>
 
-                <p className="mt-5 text-[12px] leading-6 text-[#c4d8d1]">
+                <p className="mt-5 max-w-[600px] text-[12px] leading-6 text-[#d4e9e2]">
                   Keep scanning waste and making
                   better sorting decisions to earn more
                   Eco-Sort points.
@@ -346,7 +346,7 @@ export default function Gamification() {
                     />
                   </div>
 
-                  <p className="mt-2 text-[9px] text-[#8ebaae]">
+                  <p className="mt-2 text-[9px] text-[#b5d9cd]">
                     {nextLevelPoints !== null
                       ? `${pointsToNext} points to the next level`
                       : "Highest level reached"}
@@ -356,7 +356,7 @@ export default function Gamification() {
 
               {/* POINTS */}
               <div
-                className="flex h-40 w-40 shrink-0 flex-col items-center justify-center self-center rounded-full border-[10px] border-[#64c96a]/25 bg-white/5 md:self-auto"
+                className="flex h-40 w-40 shrink-0 flex-col items-center justify-center self-center rounded-full border-[10px] border-[#8be19a]/55 bg-white/10 shadow-[0_0_0_8px_rgba(255,255,255,0.035),0_12px_35px_rgba(0,0,0,0.12)] md:self-auto"
                 aria-label={`${points} Eco Points`}
               >
                 <Star
@@ -369,7 +369,7 @@ export default function Gamification() {
                   {points}
                 </span>
 
-                <span className="mt-2 text-[9px] font-bold uppercase tracking-[0.1em] text-[#a7cfc0]">
+                <span className="mt-2 text-[9px] font-bold uppercase tracking-[0.1em] text-[#d7eee5]">
                   Eco Points
                 </span>
               </div>
@@ -408,7 +408,7 @@ export default function Gamification() {
         </section>
 
         {/* ECO-SORT SCORE CONNECTION */}
-        <section className="mt-5 rounded-[20px] border border-[#dceee2] bg-white p-6 shadow-sm">
+        <section className="eco-card mt-5 rounded-[20px] border border-[#dceee2] bg-white p-6 shadow-sm">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3">
               <div
@@ -508,7 +508,7 @@ export default function Gamification() {
         {/* PROGRESSION */}
         <section className="mt-6 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
           {/* MILESTONE */}
-          <div className="rounded-[22px] border border-[#dfe7e2] bg-white p-5 shadow-sm">
+          <div className="eco-card eco-card-hover rounded-[22px] border border-[#dfe7e2] bg-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#89958f]">
@@ -567,7 +567,7 @@ export default function Gamification() {
           </div>
 
           {/* ACHIEVEMENT PROGRESS */}
-          <div className="rounded-[22px] border border-[#dfe7e2] bg-white p-5 shadow-sm">
+          <div className="eco-card eco-card-hover rounded-[22px] border border-[#dfe7e2] bg-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#89958f]">
@@ -632,7 +632,7 @@ export default function Gamification() {
         </section>
 
         {/* BADGES */}
-        <section className="mt-7 rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm sm:p-6">
+        <section className="eco-card eco-card-hover mt-7 rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#8995a1]">
@@ -682,7 +682,7 @@ export default function Gamification() {
         {/* ACTIVITY ROADMAP */}
         <section className="mt-5 grid gap-5 lg:grid-cols-2">
           {/* POINT SYSTEM */}
-          <div className="rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm sm:p-6">
+          <div className="eco-card rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-3">
               <div
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf7ef] text-[#087443]"
@@ -751,7 +751,7 @@ export default function Gamification() {
           </div>
 
           {/* LEVEL ROADMAP */}
-          <div className="rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm sm:p-6">
+          <div className="eco-card rounded-[20px] border border-[#e1e6e9] bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-3">
               <div
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e1efff] text-[#3189d7]"
@@ -812,7 +812,7 @@ export default function Gamification() {
         </section>
 
         {/* NEXT LEVEL PROGRESS */}
-        <section className="mt-5 rounded-[20px] border border-[#dceee2] bg-white p-6 shadow-sm">
+        <section className="eco-card mt-5 rounded-[20px] border border-[#dceee2] bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#087443]">
@@ -851,7 +851,7 @@ export default function Gamification() {
         </section>
 
         {/* MOTIVATION */}
-        <section className="mt-5 rounded-[20px] border border-[#dceee2] bg-[#f3faf5] p-6">
+        <section className="eco-surface mt-5 rounded-[20px] border border-[#dceee2] bg-[#f3faf5] p-6">
           <div className="flex items-start gap-4">
             <div
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dff2e5] text-[#087443]"
@@ -973,7 +973,7 @@ function GamificationStat({
   iconClass,
 }) {
   return (
-    <div className="rounded-[17px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="eco-card eco-card-hover rounded-[17px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div
         className={`flex h-11 w-11 items-center justify-center rounded-[13px] ${iconClass}`}
         aria-hidden="true"
@@ -1011,7 +1011,7 @@ function BadgeCard({
     <div
       className={`rounded-[17px] border p-5 transition duration-200 ${
         unlocked
-          ? "border-[#d5eadc] bg-[#f8fcf9] hover:-translate-y-0.5 hover:shadow-sm"
+          ? "eco-card-hover border-[#d5eadc] bg-[#f8fcf9] hover:-translate-y-0.5 hover:shadow-sm"
           : "border-[#e5e8ea] bg-[#fafbfb]"
       }`}
     >
@@ -1085,7 +1085,7 @@ function PointRow({
   points,
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-[#edf0f1] bg-[#fafbfb] p-3">
+    <div className="eco-interactive flex items-center justify-between gap-3 rounded-xl border border-[#edf0f1] bg-[#fafbfb] p-3">
       <div className="flex min-w-0 items-center gap-3">
         <div
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#eaf7ef] text-[#087443]"
@@ -1118,7 +1118,7 @@ function LevelRow({
 }) {
   return (
     <div
-      className={`flex items-center gap-3 rounded-xl border p-3 ${
+      className={`eco-interactive flex items-center gap-3 rounded-xl border p-3 ${
         active
           ? "border-[#cfe7d7] bg-[#f3faf5]"
           : "border-[#edf0f1] bg-[#fafbfb]"

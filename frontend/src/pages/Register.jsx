@@ -165,13 +165,39 @@ export default function Register() {
     : undefined;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f5f8f6] px-5 py-10">
-      <div className="grid w-full max-w-[980px] overflow-hidden rounded-[28px] border border-[#e0e9e3] bg-white shadow-[0_25px_80px_rgba(23,60,45,.10)] lg:grid-cols-2">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f5f8f6] px-4 py-8 sm:px-5 sm:py-10">
+      <div
+        className="pointer-events-none absolute -left-28 -top-28 h-72 w-72 rounded-full bg-[#dff3e5]/70 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-[#e8f6ec] blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            "linear-gradient(#dcebe1 1px, transparent 1px), linear-gradient(90deg, #dcebe1 1px, transparent 1px)",
+          backgroundSize: "42px 42px",
+          maskImage: "linear-gradient(to bottom, black, transparent 70%)",
+        }}
+      />
+      <div className="relative z-10 grid w-full max-w-[1040px] overflow-hidden rounded-[26px] border border-[#dfe9e2] bg-white shadow-[0_30px_90px_rgba(23,60,45,.13)] lg:grid-cols-2">
         {/* =================================================
             DESKTOP BRAND PANEL
         ================================================= */}
 
-        <div className="hidden bg-[#033e35] p-12 text-white lg:block">
+        <div className="relative hidden overflow-hidden bg-[#033e35] p-10 text-white lg:block xl:p-12">
+          <div
+            className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full border border-white/10"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-[#087b49]/20 blur-2xl"
+            aria-hidden="true"
+          />
           <div className="flex items-center gap-3">
             <div
               className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#079b59]"
@@ -191,7 +217,7 @@ export default function Register() {
             </div>
           </div>
 
-          <div className="mt-24">
+          <div className="relative mt-20 xl:mt-24">
             <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#78d08d]">
               Start your eco journey
             </p>
@@ -212,7 +238,7 @@ export default function Register() {
             FORM PANEL
         ================================================= */}
 
-        <div className="p-7 sm:p-10 lg:p-12">
+        <div className="p-6 sm:p-9 lg:p-11 xl:p-12">
           {/* MOBILE BRAND */}
 
           <div className="mb-8 lg:hidden">
@@ -249,7 +275,7 @@ export default function Register() {
 
           <form
             onSubmit={handleSubmit}
-            className="mt-8 space-y-4"
+            className="mt-7 space-y-4 sm:mt-8"
             noValidate
           >
             {/* NAME */}
@@ -339,6 +365,11 @@ export default function Register() {
               }
             />
 
+            <div className="flex items-center gap-2 rounded-xl border border-[#e4eee7] bg-[#f7fbf8] px-3.5 py-2.5 text-[10px] font-semibold text-[#718078]">
+              <LockKeyhole size={13} className="shrink-0 text-[#087b49]" aria-hidden="true" />
+              <span>Your account keeps your Eco-Sort activity personal and organized.</span>
+            </div>
+
             {/* ERROR */}
 
             {error && (
@@ -363,7 +394,7 @@ export default function Register() {
                   ? "register-error"
                   : undefined
               }
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#087b49] px-5 py-3.5 text-sm font-black text-white shadow-lg shadow-[#087b49]/15 transition hover:bg-[#076d41] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087b49] focus-visible:ring-offset-2"
+              className="group flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-[#087b49] px-5 py-3.5 text-sm font-black text-white shadow-[0_12px_28px_rgba(8,123,73,.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#076d41] hover:shadow-[0_16px_32px_rgba(8,123,73,.22)] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087b49] focus-visible:ring-offset-2"
             >
               {loading ? (
                 <>
@@ -448,7 +479,7 @@ function Field({
           }
           type={type}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-[#dfe7e2] bg-[#fbfdfc] py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-[#63b985] focus:bg-white focus:ring-2 focus:ring-[#63b985]/10 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-[14px] border border-[#dfe7e2] bg-[#fbfdfc] py-3.5 pl-11 pr-4 text-sm text-[#17372f] shadow-sm outline-none transition duration-200 placeholder:text-[#a2ada7] hover:border-[#c8d9cf] focus:border-[#63b985] focus:bg-white focus:ring-4 focus:ring-[#63b985]/10 disabled:cursor-not-allowed disabled:opacity-60"
           {...props}
         />
       </div>
@@ -495,7 +526,7 @@ function PasswordField({
           }
           type={show ? "text" : "password"}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-[#dfe7e2] bg-[#fbfdfc] py-3.5 pl-11 pr-12 text-sm outline-none transition focus:border-[#63b985] focus:bg-white focus:ring-2 focus:ring-[#63b985]/10 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-[14px] border border-[#dfe7e2] bg-[#fbfdfc] py-3.5 pl-11 pr-12 text-sm text-[#17372f] shadow-sm outline-none transition duration-200 placeholder:text-[#a2ada7] hover:border-[#c8d9cf] focus:border-[#63b985] focus:bg-white focus:ring-4 focus:ring-[#63b985]/10 disabled:cursor-not-allowed disabled:opacity-60"
           {...props}
         />
 

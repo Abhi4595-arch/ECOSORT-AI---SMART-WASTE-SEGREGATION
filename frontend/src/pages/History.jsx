@@ -142,14 +142,14 @@ export default function History() {
   };
 
   return (
-    <div className="eco-app-page min-h-screen bg-[#f5f7f9] text-[#111c2c]">
+    <div className="eco-page-enter eco-app-page min-h-screen bg-[#f5f8f6] text-[#111c2c]">
       <main
         className="mx-auto max-w-[1200px] px-4 py-7 sm:px-5 sm:py-8 md:px-8 md:py-10 lg:px-10"
         aria-labelledby="history-page-title"
       >
         {/* TITLE */}
         <section aria-labelledby="history-page-title">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#c9ead6] bg-[#effaf3] px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] text-[#087443]">
+          <div className="eco-badge eco-badge-green inline-flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em]">
             <Clock
               size={14}
               aria-hidden="true"
@@ -218,7 +218,7 @@ export default function History() {
                 }
                 placeholder="Search category, bin, or guidance..."
                 aria-label="Search scan history"
-                className="w-full rounded-xl border border-[#e0e6e9] bg-[#f8fafb] py-3 pl-11 pr-11 text-[12px] outline-none transition focus:border-[#68b985] focus:bg-white focus:ring-2 focus:ring-[#68b985]/20"
+                className="eco-input w-full rounded-xl border border-[#e0e6e9] bg-[#f8fafb] py-3 pl-11 pr-11 text-[12px] outline-none transition focus:border-[#68b985] focus:bg-white focus:ring-2 focus:ring-[#68b985]/20"
               />
 
               {search && (
@@ -250,7 +250,7 @@ export default function History() {
                     type="button"
                     onClick={() => setFilter(item)}
                     aria-pressed={isActive}
-                    className={`min-h-10 rounded-xl px-4 py-2.5 text-[11px] font-bold transition focus:outline-none focus:ring-2 focus:ring-[#68b985]/40 ${
+                    className={`eco-press min-h-10 rounded-xl px-4 py-2.5 text-[11px] font-bold transition focus:outline-none focus:ring-2 focus:ring-[#68b985]/40 ${
                       isActive
                         ? "bg-[#087443] text-white shadow-md shadow-[#087443]/20"
                         : "border border-[#e1e6e9] bg-white text-[#657281] hover:bg-[#f3f8f5]"
@@ -343,7 +343,7 @@ export default function History() {
         </section>
 
         {/* FOOTER */}
-        <div className="mt-7 flex items-start gap-3 rounded-xl bg-[#033e35] px-5 py-4 text-[10px] leading-5 text-white">
+        <div className="eco-gradient mt-7 flex items-start gap-3 rounded-2xl px-5 py-4 text-[10px] leading-5 text-white shadow-sm">
           <Leaf
             size={16}
             className="mt-0.5 shrink-0 text-[#64c96a]"
@@ -373,7 +373,7 @@ function HistoryStat({
   iconClass,
 }) {
   return (
-    <div className="rounded-[16px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="eco-card rounded-[16px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-center gap-4">
         <div
           className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] ${iconClass}`}
@@ -435,10 +435,10 @@ function HistoryCard({ scan }) {
 
   return (
     <article className="group rounded-[18px] border border-[#e1e6e9] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex flex-col gap-5 md:flex-row md:items-center">
+      <div className="flex flex-col gap-4 sm:gap-5 md:flex-row md:items-center">
         {/* CATEGORY ICON */}
         <div
-          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl sm:h-16 sm:w-16"
           style={{
             background: current.background,
           }}
@@ -647,7 +647,7 @@ function EmptyState({
   onClear,
 }) {
   return (
-    <div className="rounded-[18px] border border-[#e1e6e9] bg-white py-20 text-center shadow-sm">
+    <div className="eco-card rounded-[18px] border border-[#e1e6e9] bg-white py-16 text-center shadow-sm sm:py-20">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#eaf7ee]">
         <ScanLine
           size={30}
@@ -673,7 +673,7 @@ function EmptyState({
           <button
             type="button"
             onClick={onClear}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#dfe7e2] bg-white px-5 py-3 text-xs font-bold text-[#087443] transition hover:bg-[#f3f8f5] focus:outline-none focus:ring-2 focus:ring-[#68b985]/40"
+            className="eco-press inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#dfe7e2] bg-white px-5 py-3 text-xs font-bold text-[#087443] transition hover:bg-[#f3f8f5] focus:outline-none focus:ring-2 focus:ring-[#68b985]/40"
           >
             <X
               size={15}
@@ -685,7 +685,7 @@ function EmptyState({
 
         <NavLink
           to="/scan"
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#087443] px-6 py-3 text-xs font-bold text-white transition hover:bg-[#096239] focus:outline-none focus:ring-2 focus:ring-[#68b985]/50 focus:ring-offset-2"
+          className="eco-press inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#087443] px-6 py-3 text-xs font-bold text-white transition hover:bg-[#096239] focus:outline-none focus:ring-2 focus:ring-[#68b985]/50 focus:ring-offset-2"
         >
           <Camera
             size={15}

@@ -1,7 +1,10 @@
 import { motion, useReducedMotion } from "framer-motion";
+import { useState } from "react";
 import {
   ArrowRight,
   Camera,
+  Menu,
+  X,
   Globe2,
   Leaf,
   Recycle,
@@ -92,6 +95,7 @@ const steps = [
 export default function Home() {
   const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { isAuthenticated, loading } = useAuth();
 
@@ -107,7 +111,11 @@ export default function Home() {
    * While the authentication state is being restored,
    * ProtectedRoute remains the final safety layer.
    */
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   const startScanning = () => {
+    closeMobileMenu();
+
     if (isAuthenticated) {
       navigate("/scan");
       return;
@@ -237,7 +245,7 @@ export default function Home() {
             ))}
           </nav>
 
-          {/* GET STARTED */}
+          {/* DESKTOP CTA */}
 
           <button
             type="button"
@@ -252,7 +260,55 @@ export default function Home() {
               className="transition-transform group-hover:translate-x-1"
             />
           </button>
+
+          {/* MOBILE MENU TOGGLE */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="home-mobile-navigation"
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            className="ml-3 flex h-11 w-11 items-center justify-center rounded-xl border border-[#dfe7e2] bg-white text-[#087443] shadow-sm transition hover:border-[#afd6bc] hover:bg-[#f3faf5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2 lg:hidden"
+          >
+            {mobileMenuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+          </button>
         </div>
+
+        {/* MOBILE NAVIGATION */}
+        {mobileMenuOpen && (
+          <div
+            id="home-mobile-navigation"
+            className="border-t border-[#edf1ee] bg-white px-5 pb-5 pt-3 shadow-[0_18px_35px_rgba(20,63,40,.08)] lg:hidden"
+          >
+            <nav aria-label="Mobile navigation" className="mx-auto max-w-[1350px] space-y-1">
+              {[
+                ["Home", "#home"],
+                ["Features", "#features"],
+                ["How It Works", "#how"],
+                ["Impact", "#impact"],
+                ["About Us", "#about"],
+                ["Contact", "#contact"],
+              ].map(([name, link]) => (
+                <a
+                  key={name}
+                  href={link}
+                  onClick={closeMobileMenu}
+                  className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-[#27352f] transition hover:bg-[#f3faf5] hover:text-[#087443] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443]"
+                >
+                  {name}
+                </a>
+              ))}
+              <button
+                type="button"
+                onClick={startScanning}
+                className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#062f25] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#087443] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087443] focus-visible:ring-offset-2 active:scale-[0.99]"
+              >
+                Start Scanning
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* ================= HERO ================= */}
@@ -303,7 +359,7 @@ export default function Home() {
 
             <h2
               id="hero-heading"
-              className="max-w-[690px] text-[53px] font-black leading-[1.01] tracking-[-0.065em] sm:text-[65px] lg:text-[74px]"
+              className="max-w-[690px] text-[45px] font-black leading-[1.01] tracking-[-0.065em] sm:text-[65px] lg:text-[74px]"
             >
               Scan Smart.
               <br />
@@ -384,24 +440,24 @@ export default function Home() {
 
           <motion.div
             {...heroRightAnimation}
-            className="relative flex min-h-[560px] items-center justify-center"
+            className="relative flex min-h-[500px] items-center justify-center sm:min-h-[560px]"
           >
             {/* GREEN CIRCLES */}
 
             <div
-              className="absolute right-[4%] top-[7%] h-[470px] w-[470px] rounded-full bg-[#dff1e4] lg:h-[510px] lg:w-[510px]"
+              className="absolute right-[50%] top-[7%] h-[360px] w-[360px] translate-x-1/2 rounded-full sm:right-[4%] sm:h-[470px] sm:w-[470px] sm:translate-x-0 bg-[#dff1e4] lg:h-[510px] lg:w-[510px]"
               aria-hidden="true"
             />
 
             <div
-              className="absolute right-[10%] top-[14%] h-[380px] w-[380px] rounded-full bg-[#073b2d] lg:h-[420px] lg:w-[420px]"
+              className="absolute right-[50%] top-[14%] h-[300px] w-[300px] translate-x-1/2 rounded-full sm:right-[10%] sm:h-[380px] sm:w-[380px] sm:translate-x-0 bg-[#073b2d] lg:h-[420px] lg:w-[420px]"
               aria-hidden="true"
             />
 
             {/* DOTTED RING */}
 
             <div
-              className="absolute right-[1%] top-[4%] h-[510px] w-[510px] rounded-full border border-dashed border-[#a7ceb4]"
+              className="absolute right-[50%] top-[4%] h-[390px] w-[390px] translate-x-1/2 rounded-full sm:right-[1%] sm:h-[510px] sm:w-[510px] sm:translate-x-0 border border-dashed border-[#a7ceb4]"
               aria-hidden="true"
             />
 
@@ -422,7 +478,7 @@ export default function Home() {
                       ease: "easeInOut",
                     }
               }
-              className="relative z-20 w-[285px] rotate-[4deg] rounded-[40px] border-[7px] border-[#111b19] bg-[#111b19] p-2 shadow-[0_40px_80px_rgba(0,0,0,.28)] sm:w-[310px]"
+              className="relative z-20 w-[265px] rotate-[4deg] sm:w-[285px] rounded-[40px] border-[7px] border-[#111b19] bg-[#111b19] p-2 shadow-[0_40px_80px_rgba(0,0,0,.28)] sm:w-[310px]"
             >
               <div className="overflow-hidden rounded-[31px] bg-white">
                 {/* STATUS */}
@@ -542,7 +598,7 @@ export default function Home() {
                       ease: "easeInOut",
                     }
               }
-              className="absolute bottom-[17%] left-[-1%] z-30 w-[210px] rounded-[20px] border border-white bg-white/95 p-4 shadow-[0_22px_50px_rgba(19,66,42,.16)] backdrop-blur-xl sm:left-[-8%]"
+              className="absolute bottom-[8%] left-[2%] z-30 w-[190px] sm:bottom-[17%] sm:left-[-8%] sm:w-[210px] rounded-[20px] border border-white bg-white/95 p-4 shadow-[0_22px_50px_rgba(19,66,42,.16)] backdrop-blur-xl "
             >
               <div className="flex items-center gap-3">
                 <div

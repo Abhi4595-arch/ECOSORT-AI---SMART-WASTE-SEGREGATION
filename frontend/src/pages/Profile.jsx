@@ -143,10 +143,11 @@ export default function Profile() {
     100
   );
 
+  // Gamification owns progression levels; Eco-Sort Score is a separate metric.
   const level =
-    ecoScore?.level ||
     gamification?.level ||
-    "Eco Explorer";
+    ecoScore?.level ||
+    "Eco Beginner";
 
   const badges = Array.isArray(gamification?.badges)
     ? gamification.badges
@@ -253,7 +254,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="eco-app-page min-h-full bg-[#f5f8f6] text-[#10241b]">
+    <div className="eco-app-page eco-page-enter min-h-full bg-[#f5f8f6] text-[#10241b]">
       <main
         className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10"
         aria-labelledby="profile-page-title"
@@ -290,16 +291,16 @@ export default function Profile() {
 
         {/* HERO */}
         <section
-          className="relative mt-7 overflow-hidden rounded-[28px] bg-[#063d32] shadow-[0_18px_50px_rgba(6,61,50,0.16)]"
+          className="relative mt-7 overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#043f35_0%,#075b46_52%,#087443_100%)] shadow-[0_18px_50px_rgba(4,63,53,0.18)]"
           aria-label="Profile overview"
         >
           <div
-            className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-[#35a66c]/25 blur-3xl"
+            className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-[#64c96a]/20 blur-3xl"
             aria-hidden="true"
           />
 
           <div
-            className="pointer-events-none absolute -bottom-36 left-1/3 h-72 w-72 rounded-full bg-[#64c96a]/15 blur-3xl"
+            className="pointer-events-none absolute -bottom-36 left-1/3 h-72 w-72 rounded-full bg-[#8be19a]/12 blur-3xl"
             aria-hidden="true"
           />
 
@@ -316,14 +317,14 @@ export default function Profile() {
           <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center lg:p-10">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
               <div
-                className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[26px] border-4 border-white/80 bg-[#15904d] text-2xl font-black text-white shadow-xl sm:h-28 sm:w-28 sm:text-3xl"
+                className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[26px] border-4 border-white/75 bg-[#15904d] text-2xl font-black text-white shadow-[0_14px_30px_rgba(0,0,0,0.18)] sm:h-28 sm:w-28 sm:text-3xl"
                 aria-label={`Profile initials ${initials}`}
               >
                 {initials}
               </div>
 
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#8de0a5]">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#a9e5b7]">
                   Eco-Sort AI member
                 </p>
 
@@ -331,7 +332,7 @@ export default function Profile() {
                   {user?.name || "Eco Warrior"}
                 </h2>
 
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-[#c7ded3]">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-[#d4e9e2]">
                   <span className="inline-flex min-w-0 items-center gap-1.5 break-all">
                     <Mail
                       size={13}
@@ -342,7 +343,7 @@ export default function Profile() {
                   </span>
 
                   <span
-                    className="hidden h-1 w-1 rounded-full bg-[#6fa893] sm:block"
+                    className="hidden h-1 w-1 rounded-full bg-[#8bc5ae] sm:block"
                     aria-hidden="true"
                   />
 
@@ -351,11 +352,11 @@ export default function Profile() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-sm sm:p-5">
+            <div className="flex items-center gap-4 rounded-2xl border border-white/15 bg-white/[0.10] p-4 shadow-[0_12px_30px_rgba(0,0,0,0.10)] backdrop-blur-sm sm:p-5">
               <ScoreRing score={score} />
 
               <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-[#9ed4b5]">
+                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-[#a9e5b7]">
                   Eco-Sort Score
                 </p>
 
@@ -363,7 +364,7 @@ export default function Profile() {
                   {level}
                 </p>
 
-                <p className="mt-1 text-[10px] text-[#b9d3c7]">
+                <p className="mt-1 text-[10px] text-[#d4e9e2]">
                   Based on your scan activity
                 </p>
               </div>
@@ -438,7 +439,7 @@ export default function Profile() {
                   setSaveError("");
                   setSaveSuccess("");
                 }}
-                className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#087443] px-4 text-[11px] font-black text-white shadow-lg shadow-[#087443]/15 transition hover:-translate-y-0.5 hover:bg-[#096239] focus:outline-none focus:ring-2 focus:ring-[#68b985]/50 focus:ring-offset-2"
+                className="eco-press mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#087443] px-4 text-[11px] font-black text-white shadow-lg shadow-[#087443]/15 transition hover:-translate-y-0.5 hover:bg-[#096239] focus:outline-none focus:ring-2 focus:ring-[#68b985]/50 focus:ring-offset-2"
               >
                 <Pencil size={14} aria-hidden="true" />
                 Edit profile
@@ -510,7 +511,7 @@ export default function Profile() {
                 <button
                   disabled={saving}
                   type="submit"
-                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#033e35] px-4 text-[10px] font-black text-white transition hover:bg-[#075245] focus:outline-none focus:ring-2 focus:ring-[#68b985]/50 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="eco-press mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#033e35] px-4 text-[10px] font-black text-white transition hover:bg-[#075245] focus:outline-none focus:ring-2 focus:ring-[#68b985]/50 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saving ? "Saving changes…" : "Save changes"}
                 </button>
@@ -625,7 +626,7 @@ export default function Profile() {
                 </p>
 
                 <p className="mt-1 text-[12px] font-black text-[#173d2d]">
-                  {points} points · {nextLevel}
+                  {points} points · {level}
                 </p>
               </div>
 
@@ -710,7 +711,7 @@ export default function Profile() {
                   return (
                     <div
                       key={`${name}-${index}`}
-                      className="flex items-center gap-3 rounded-2xl border border-[#dceee2] bg-[#f5faf7] p-3.5"
+                      className="eco-interactive flex items-center gap-3 rounded-2xl border border-[#dceee2] bg-[#f5faf7] p-3.5"
                     >
                       <div
                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#dff2e5] text-[#087443]"
@@ -801,7 +802,7 @@ export default function Profile() {
 function Card({ children, className = "" }) {
   return (
     <div
-      className={`rounded-[24px] border border-[#dfe8e3] bg-white p-5 shadow-sm sm:p-6 ${className}`}
+      className={`eco-card rounded-[24px] border border-[#dfe8e3] bg-white p-5 shadow-sm sm:p-6 ${className}`}
     >
       {children}
     </div>
@@ -856,7 +857,7 @@ function MetricCard({
   compact = false,
 }) {
   return (
-    <div className="rounded-[20px] border border-[#dfe8e3] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="eco-card-hover rounded-[20px] border border-[#dfe8e3] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf7ef] text-[#087443]"
@@ -895,7 +896,7 @@ function MetricCard({
 
 function InfoTile({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-2xl border border-[#e6ece8] bg-[#fafcfb] p-4">
+    <div className="eco-interactive rounded-2xl border border-[#e6ece8] bg-[#fafcfb] p-4">
       <div className="flex items-center gap-2 text-[#087443]">
         <Icon size={14} aria-hidden="true" />
 
@@ -964,7 +965,7 @@ function ScoreFactor({ label, value, weight }) {
   const safeWeight = Math.max(0, safeNumber(weight));
 
   return (
-    <div className="rounded-2xl border border-[#e8eeea] bg-[#fbfcfb] p-4">
+    <div className="eco-interactive rounded-2xl border border-[#e8eeea] bg-[#fbfcfb] p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[10px] font-black text-[#2c4137]">
@@ -1047,7 +1048,7 @@ function QuickAction({
 
 function EmptyBadges() {
   return (
-    <div className="mt-5 rounded-2xl border border-dashed border-[#dce5e0] bg-[#fafcfb] px-5 py-8 text-center">
+    <div className="eco-surface mt-5 rounded-2xl border border-dashed border-[#dce5e0] bg-[#fafcfb] px-5 py-8 text-center">
       <Award
         size={25}
         className="mx-auto text-[#9eaaa4]"

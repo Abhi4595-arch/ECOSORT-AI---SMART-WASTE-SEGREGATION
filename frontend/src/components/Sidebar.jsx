@@ -80,7 +80,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="eco-sidebar hidden min-h-screen w-[240px] shrink-0 flex-col bg-[#033e35] text-white lg:flex"
+      className="hidden min-h-screen w-[248px] shrink-0 flex-col border-r border-[#174f45] bg-[#033e35] text-white lg:flex"
       aria-label="Primary navigation"
     >
       {/* =====================================================
@@ -90,13 +90,16 @@ export default function Sidebar() {
         <NavLink
           to="/"
           aria-label="ECO-SORT AI home"
-          className="flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#79d474] focus-visible:ring-offset-2 focus-visible:ring-offset-[#033e35]"
+          className="group flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#79d474] focus-visible:ring-offset-2 focus-visible:ring-offset-[#033e35]"
         >
           <div
-            className="eco-brand-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#079b59] text-white shadow-lg shadow-black/10"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-[#087f5b] text-white shadow-[0_8px_22px_rgba(0,0,0,0.16)] transition-transform duration-200 group-hover:scale-[1.04]"
             aria-hidden="true"
           >
-            <Recycle size={21} />
+            <Recycle
+              size={22}
+              strokeWidth={2.2}
+            />
           </div>
 
           <div className="min-w-0">
@@ -104,7 +107,7 @@ export default function Sidebar() {
               ECO-SORT AI
             </div>
 
-            <div className="mt-0.5 text-[8px] font-medium text-[#a8c9be]">
+            <div className="mt-1 text-[8px] font-medium tracking-[0.02em] text-[#a8c9be]">
               Smart Waste. Green Future.
             </div>
           </div>
@@ -118,7 +121,7 @@ export default function Sidebar() {
         className="flex-1 px-3.5"
         aria-label="Dashboard navigation"
       >
-        <p className="mb-2 px-3 text-[8px] font-black uppercase tracking-[0.14em] text-[#78c7ae]">
+        <p className="mb-2 px-3 text-[8px] font-black uppercase tracking-[0.16em] text-[#78c7ae]">
           Main Menu
         </p>
 
@@ -132,11 +135,11 @@ export default function Sidebar() {
         </div>
 
         <div
-          className="my-5 h-px bg-[#276358]"
+          className="my-6 h-px bg-gradient-to-r from-transparent via-[#276358] to-transparent"
           aria-hidden="true"
         />
 
-        <p className="mb-2 px-3 text-[8px] font-black uppercase tracking-[0.14em] text-[#78c7ae]">
+        <p className="mb-2 px-3 text-[8px] font-black uppercase tracking-[0.16em] text-[#78c7ae]">
           Account
         </p>
 
@@ -154,14 +157,28 @@ export default function Sidebar() {
           USER INFO
       ===================================================== */}
       <div className="px-3.5 pb-2">
-        <div className="eco-user-card rounded-xl border border-[#1d5a4e] bg-[#07372f] px-3.5 py-3">
-          <p className="truncate text-[10px] font-black text-white">
-            {user?.name || "Eco-Sort User"}
-          </p>
+        <div className="rounded-xl border border-[#1d5a4e] bg-[#07372f] px-3.5 py-3 shadow-sm">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0b7658] text-[10px] font-black text-[#d8f7e8]"
+              aria-hidden="true"
+            >
+              {(user?.name || "E")
+                .trim()
+                .charAt(0)
+                .toUpperCase()}
+            </div>
 
-          <p className="mt-0.5 truncate text-[8px] text-[#a6c7bd]">
-            {user?.email || ""}
-          </p>
+            <div className="min-w-0">
+              <p className="truncate text-[10px] font-black text-white">
+                {user?.name || "Eco-Sort User"}
+              </p>
+
+              <p className="mt-0.5 truncate text-[8px] text-[#a6c7bd]">
+                {user?.email || ""}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -169,20 +186,26 @@ export default function Sidebar() {
           CTA + SIGN OUT
       ===================================================== */}
       <div className="p-3.5 pt-2.5">
-        <div className="eco-sidebar-cta relative overflow-hidden rounded-[18px] border border-[#15594b] bg-[#062f29] p-4">
+        <div className="relative overflow-hidden rounded-[18px] border border-[#15594b] bg-[#062f29] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.1)]">
           <div
-            className="absolute -right-7 -top-7 h-20 w-20 rounded-full bg-[#79d474]/10 blur-xl"
+            className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#79d474]/10 blur-2xl"
+            aria-hidden="true"
+          />
+
+          <div
+            className="absolute -bottom-10 -left-8 h-20 w-20 rounded-full bg-[#087f5b]/20 blur-2xl"
             aria-hidden="true"
           />
 
           <div className="relative">
             <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#176b59]"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#176b59] shadow-sm"
               aria-hidden="true"
             >
               <Zap
                 size={16}
                 className="text-[#79d474]"
+                fill="currentColor"
               />
             </div>
 
@@ -197,8 +220,12 @@ export default function Sidebar() {
 
             <NavLink
               to="/scan"
-              className="mt-3.5 flex min-h-10 items-center justify-center rounded-xl bg-[#079b59] px-3 text-[9px] font-black text-white transition hover:bg-[#08ad63] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79d474] focus-visible:ring-offset-2 focus-visible:ring-offset-[#062f29] active:scale-[0.99]"
+              className="mt-3.5 flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#087f5b] px-3 text-[9px] font-black text-white shadow-[0_6px_16px_rgba(8,127,91,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#079b68] hover:shadow-[0_9px_20px_rgba(8,127,91,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79d474] focus-visible:ring-offset-2 focus-visible:ring-offset-[#062f29] active:translate-y-0"
             >
+              <Camera
+                size={13}
+                aria-hidden="true"
+              />
               Start Scanning
             </NavLink>
 
@@ -207,7 +234,7 @@ export default function Sidebar() {
               onClick={handleLogout}
               disabled={loggingOut}
               aria-busy={loggingOut}
-              className="mt-2 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#397266] px-3 text-[9px] font-bold text-[#c4d9d2] transition hover:bg-[#104f46] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79d474] focus-visible:ring-offset-2 focus-visible:ring-offset-[#062f29] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#397266] px-3 text-[9px] font-bold text-[#c4d9d2] transition-all duration-200 hover:border-[#568a7d] hover:bg-[#104f46] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79d474] focus-visible:ring-offset-2 focus-visible:ring-offset-[#062f29] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loggingOut ? (
                 <>
@@ -231,7 +258,7 @@ export default function Sidebar() {
           </div>
         </div>
 
-        <div className="mt-4 px-2 text-[7px] leading-4 text-[#73988f]">
+        <div className="mt-4 px-2 pb-1 text-[7px] leading-4 tracking-wide text-[#73988f]">
           ECO-SORT AI
           <br />
           Intelligent Waste Classification
@@ -256,26 +283,42 @@ function SidebarLink({
       aria-label={label}
       className={({ isActive }) =>
         [
-          "group flex min-h-10 items-center gap-3 rounded-xl px-3 py-2.5 text-[10px] font-bold transition",
-          "outline-none focus-visible:ring-2 focus-visible:ring-[#79d474] focus-visible:ring-offset-2 focus-visible:ring-offset-[#033e35]",
+          "group relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-[10px] font-bold outline-none transition-all duration-200",
+          "focus-visible:ring-2 focus-visible:ring-[#79d474] focus-visible:ring-offset-2 focus-visible:ring-offset-[#033e35]",
           isActive
-            ? "bg-[#0b7658] text-white shadow-sm"
-            : "text-[#c4d9d2] hover:bg-[#0a5146] hover:text-white",
+            ? "bg-[#087f5b] text-white shadow-[0_6px_16px_rgba(0,0,0,0.12)]"
+            : "text-[#c4d9d2] hover:bg-[#0a5146] hover:text-white hover:translate-x-0.5",
         ].join(" ")
       }
     >
       {({ isActive }) => (
         <>
-          <Icon
-            size={16}
-            strokeWidth={isActive ? 2.5 : 2}
-            aria-hidden="true"
-            className={
+          {isActive && (
+            <span
+              className="absolute bottom-2.5 left-0 top-2.5 w-[3px] rounded-r-full bg-[#79d474]"
+              aria-hidden="true"
+            />
+          )}
+
+          <span
+            className={[
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors duration-200",
               isActive
-                ? "text-[#a4ed9d]"
-                : "text-[#8ebbb0] transition-colors group-hover:text-[#bce8cf]"
-            }
-          />
+                ? "bg-white/10"
+                : "bg-transparent group-hover:bg-white/[0.06]",
+            ].join(" ")}
+          >
+            <Icon
+              size={16}
+              strokeWidth={isActive ? 2.5 : 2}
+              aria-hidden="true"
+              className={
+                isActive
+                  ? "text-[#a4ed9d]"
+                  : "text-[#8ebbb0] transition-colors group-hover:text-[#bce8cf]"
+              }
+            />
+          </span>
 
           <span className="truncate">
             {label}
@@ -283,7 +326,7 @@ function SidebarLink({
 
           {isActive && (
             <span
-              className="ml-auto h-1.5 w-1.5 rounded-full bg-[#79d474]"
+              className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-[#79d474] shadow-[0_0_8px_rgba(121,212,116,0.55)]"
               aria-hidden="true"
             />
           )}

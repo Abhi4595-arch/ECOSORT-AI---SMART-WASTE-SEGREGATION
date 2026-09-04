@@ -200,7 +200,7 @@ export default function Login() {
               aria-describedby={
                 error ? "login-error" : undefined
               }
-              className="w-full rounded-xl border border-[#dfe7e2] bg-[#fbfdfc] py-3.5 pl-11 pr-12 text-sm outline-none transition focus:border-[#63b985] focus:bg-white focus:ring-2 focus:ring-[#63b985]/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-[14px] border border-[#dfe7e2] bg-[#fbfdfc] py-3.5 pl-11 pr-12 text-sm text-[#17372f] shadow-sm outline-none transition duration-200 placeholder:text-[#a2ada7] hover:border-[#c8d9cf] focus:border-[#63b985] focus:bg-white focus:ring-4 focus:ring-[#63b985]/10 disabled:cursor-not-allowed disabled:opacity-60"
             />
 
             <button
@@ -249,7 +249,7 @@ export default function Login() {
           type="submit"
           disabled={loading}
           aria-busy={loading}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#087b49] px-5 py-3.5 text-sm font-black text-white shadow-lg shadow-[#087b49]/15 transition hover:bg-[#076d41] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087b49] focus-visible:ring-offset-2"
+          className="group flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-[#087b49] px-5 py-3.5 text-sm font-black text-white shadow-[0_12px_28px_rgba(8,123,73,.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#076d41] hover:shadow-[0_16px_32px_rgba(8,123,73,.22)] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087b49] focus-visible:ring-offset-2"
         >
           {loading ? (
             <>
@@ -277,6 +277,11 @@ export default function Login() {
         </button>
 
         {/* REGISTER */}
+
+        <div className="flex items-center justify-center gap-2 pt-1 text-[10px] font-semibold text-[#8a9690]">
+          <LockKeyhole size={12} aria-hidden="true" />
+          <span>Your account session is securely protected.</span>
+        </div>
 
         <p className="text-center text-xs text-[#718078]">
           Don&apos;t have an account?{" "}
@@ -337,7 +342,7 @@ function Field({
             onChange(event.target.value)
           }
           placeholder={placeholder}
-          className="w-full rounded-xl border border-[#dfe7e2] bg-[#fbfdfc] py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-[#63b985] focus:bg-white focus:ring-2 focus:ring-[#63b985]/10 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-[14px] border border-[#dfe7e2] bg-[#fbfdfc] py-3.5 pl-11 pr-4 text-sm text-[#17372f] shadow-sm outline-none transition duration-200 placeholder:text-[#a2ada7] hover:border-[#c8d9cf] focus:border-[#63b985] focus:bg-white focus:ring-4 focus:ring-[#63b985]/10 disabled:cursor-not-allowed disabled:opacity-60"
           {...props}
         />
       </div>
@@ -355,11 +360,37 @@ function AuthShell({
   children,
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f5f8f6] px-5 py-10">
-      <div className="grid w-full max-w-[980px] overflow-hidden rounded-[28px] border border-[#e0e9e3] bg-white shadow-[0_25px_80px_rgba(23,60,45,.10)] lg:grid-cols-2">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f5f8f6] px-4 py-8 sm:px-5 sm:py-10">
+      <div
+        className="pointer-events-none absolute -left-28 -top-28 h-72 w-72 rounded-full bg-[#dff3e5]/70 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-[#e8f6ec] blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            "linear-gradient(#dcebe1 1px, transparent 1px), linear-gradient(90deg, #dcebe1 1px, transparent 1px)",
+          backgroundSize: "42px 42px",
+          maskImage: "linear-gradient(to bottom, black, transparent 70%)",
+        }}
+      />
+      <div className="relative z-10 grid w-full max-w-[1040px] overflow-hidden rounded-[26px] border border-[#dfe9e2] bg-white shadow-[0_30px_90px_rgba(23,60,45,.13)] lg:grid-cols-2">
         {/* DESKTOP BRAND PANEL */}
 
-        <div className="hidden bg-[#033e35] p-12 text-white lg:block">
+        <div className="relative hidden overflow-hidden bg-[#033e35] p-10 text-white lg:block xl:p-12">
+          <div
+            className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full border border-white/10"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-[#087b49]/20 blur-2xl"
+            aria-hidden="true"
+          />
           <div className="flex items-center gap-3">
             <div
               className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#079b59]"
@@ -379,7 +410,7 @@ function AuthShell({
             </div>
           </div>
 
-          <div className="mt-24">
+          <div className="relative mt-20 xl:mt-24">
             <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#78d08d]">
               See Waste. Know Waste. Sort Right.
             </p>
@@ -399,7 +430,7 @@ function AuthShell({
 
         {/* FORM PANEL */}
 
-        <div className="p-7 sm:p-10 lg:p-12">
+        <div className="p-6 sm:p-9 lg:p-11 xl:p-12">
           {/* MOBILE BRAND */}
 
           <div className="mb-8 lg:hidden">
@@ -433,7 +464,7 @@ function AuthShell({
             {subtitle}
           </p>
 
-          <div className="mt-8">
+          <div className="mt-7 sm:mt-8">
             {children}
           </div>
         </div>
